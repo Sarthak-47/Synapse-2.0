@@ -8,6 +8,7 @@ import { GraphArea } from "@/components/graph-area"
 import { ProjectSidebar } from "@/components/project-sidebar"
 import { StatusBar } from "@/components/status-bar"
 import { GhostPanel, type GhostNote } from "@/components/ghost-panel"
+import { ChatPanel } from "@/components/chat-panel"
 import { VimInput } from "@/components/vim-input"
 import { IntroModal } from "@/components/intro-modal"
 import type { TextBlock } from "@/components/tile-card"
@@ -46,6 +47,7 @@ export default function Page() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isIndexOpen, setIsIndexOpen] = useState(false)
   const [isGhostPanelOpen, setIsGhostPanelOpen] = useState(false)
+  const [isChatPanelOpen, setIsChatPanelOpen]   = useState(false)
   const [viewMode, setViewMode] = useState<"tiling" | "kanban" | "graph">("tiling")
   const [isCommandKOpen, setIsCommandKOpen] = useState(false)
   const [jumpToSettings, setJumpToSettings] = useState(false)
@@ -560,12 +562,14 @@ export default function Page() {
           setIsCommandKOpen(false)
         } else if (isGhostPanelOpen) {
           setIsGhostPanelOpen(false)
+        } else if (isChatPanelOpen) {
+          setIsChatPanelOpen(false)
         }
       }
     }
     window.addEventListener("keydown", handleKeys)
     return () => window.removeEventListener("keydown", handleKeys)
-  }, [isCommandKOpen, isGhostPanelOpen, undo])
+  }, [isCommandKOpen, isGhostPanelOpen, isChatPanelOpen, undo])
 
   const addBlock = useCallback(
     (text: string, forcedType?: ContentType) => {
@@ -792,6 +796,10 @@ export default function Page() {
       setIsSidebarOpen(false)
       setIsIndexOpen(false)
       setIsGhostPanelOpen(prev => !prev)
+    } else if (cmd === "chat") {
+      setIsSidebarOpen(false)
+      setIsIndexOpen(false)
+      setIsChatPanelOpen(prev => !prev)
     } else if (cmd === "clear") clearBlocks()
     else if (cmd === "help") window.open("https://github.com/albingroen/react-cmdk", "_blank")
     
@@ -965,6 +973,12 @@ export default function Page() {
             onClose={() => setIsGhostPanelOpen(false)}
             onClaim={claimGhostNote}
             onDismiss={dismissGhostNote}
+          />
+          <ChatPanel
+            blocks={blocks}
+            isOpen={isChatPanelOpen}
+            onClose={() => setIsChatPanelOpen(false)}
+            onHighlight={setHighlightedBlockId}
           />
         </div>
 

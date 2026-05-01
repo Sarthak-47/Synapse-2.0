@@ -4,7 +4,7 @@ import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Trello, Grid, Trash2, Clipboard, Download,
-  FolderOpen, FolderPlus, BookOpen, Sparkles,
+  FolderOpen, FolderPlus, BookOpen, Sparkles, MessageSquare,
   FolderDown, FolderInput, GitFork
 } from "lucide-react"
 import { Command } from "cmdk"
@@ -51,7 +51,8 @@ export function VimInput({ onSubmit, onCommand, isCommandKOpen, setIsCommandKOpe
     { id: "open-projects",  icon: FolderOpen, label: "Projects",    sub: "" },
     { id: "new-project",    icon: FolderPlus, label: "New Project", sub: "" },
     { id: "open-index",     icon: BookOpen,   label: "Index",       sub: "" },
-    { id: "open-synthesis", icon: Sparkles,   label: "Synthesis",   sub: "" },
+    { id: "open-synthesis", icon: Sparkles,      label: "Synthesis",       sub: "" },
+    { id: "chat",           icon: MessageSquare, label: "Ask your canvas", sub: "RAG chat" },
   ], [])
 
   // ── Filtered items ──────────────────────────────────────────────────────
