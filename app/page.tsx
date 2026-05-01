@@ -19,6 +19,7 @@ import { useAISettings } from "@/lib/ai-settings"
 import { enrichBlockClient } from "@/lib/ai-enrich"
 import { generateGhostClient } from "@/lib/ai-ghost"
 import { exportToMarkdown, downloadMarkdown, copyToClipboard } from "@/lib/export"
+import { detectContradictions, type Contradiction } from "@/lib/ai-contradiction"
 import { downloadNodepadFile, parseNodepadFile, NodepadParseError } from "@/lib/nodepad-format"
 import { detectContentType } from "@/lib/detect-content-type"
 
@@ -36,6 +37,7 @@ export interface Project {
   lastGhostTimestamp?: number
   /** Texts of recently generated ghost notes — passed back to the API to prevent near-duplicates */
   lastGhostTexts?: string[]
+  contradictions?: Contradiction[]
 }
 
 import { TileIndex } from "@/components/tile-index"
@@ -49,7 +51,8 @@ export default function Page() {
   const [isIndexOpen, setIsIndexOpen] = useState(false)
   const [isGhostPanelOpen, setIsGhostPanelOpen] = useState(false)
   const [isChatPanelOpen, setIsChatPanelOpen]     = useState(false)
-  const [isReportPanelOpen, setIsReportPanelOpen] = useState(false)
+  const [isReportPanelOpen, setIsReportPanelOpen]   = useState(false)
+  const [isDetectingTensions, setIsDetectingTensions] = useState(false)
   const [viewMode, setViewMode] = useState<"tiling" | "kanban" | "graph">("tiling")
   const [isCommandKOpen, setIsCommandKOpen] = useState(false)
   const [jumpToSettings, setJumpToSettings] = useState(false)
@@ -114,8 +117,9 @@ export default function Page() {
     projects.find(p => p.id === activeProjectId) || projects[0],
   [projects, activeProjectId])
 
-  const blocks = activeProject?.blocks || []
-  const ghostNotes = activeProject?.ghostNotes || []
+  const blocks         = activeProject?.blocks || []
+  const ghostNotes     = activeProject?.ghostNotes || []
+  const contradictions = activeProject?.contradictions || []
 
   const updateActiveProject = useCallback((updater: (p: Project) => Project) => {
     setProjects(prev => prev.map(p => p.id === activeProjectId ? updater(p) : p))
@@ -545,6 +549,19 @@ export default function Page() {
     }))
   }, [updateActiveProject])
 
+  const runContradictionDetection = useCallback(async () => {
+    if (isDetectingTensions || blocks.length < 2) return
+    setIsDetectingTensions(true)
+    try {
+      const found = await detectContradictions(blocks)
+      updateActiveProject(p => ({ ...p, contradictions: found }))
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setIsDetectingTensions(false)
+    }
+  }, [blocks, isDetectingTensions, updateActiveProject])
+
   useEffect(() => {
     const handleKeys = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -808,6 +825,10 @@ export default function Page() {
       setIsSidebarOpen(false)
       setIsIndexOpen(false)
       setIsReportPanelOpen(prev => !prev)
+    } else if (cmd === "detect-tensions") {
+      runContradictionDetection()
+    } else if (cmd === "clear-tensions") {
+      updateActiveProject(p => ({ ...p, contradictions: [] }))
     } else if (cmd === "clear") clearBlocks()
     else if (cmd === "help") window.open("https://github.com/albingroen/react-cmdk", "_blank")
     
@@ -968,6 +989,9 @@ export default function Page() {
                   onEditAnnotation={editAnnotation}
                   highlightedBlockId={highlightedBlockId}
                   onHighlight={setHighlightedBlockId}
+                  contradictions={contradictions}
+                  isDetectingTensions={isDetectingTensions}
+                  onDetectTensions={runContradictionDetection}
                 />
               )
             ) : (

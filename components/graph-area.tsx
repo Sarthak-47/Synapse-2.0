@@ -4,6 +4,7 @@ import * as React from "react"
 import * as d3 from "d3"
 import { CONTENT_TYPE_CONFIG } from "@/lib/content-types"
 import type { TextBlock } from "@/components/tile-card"
+import type { Contradiction } from "@/lib/ai-contradiction"
 import { GraphDetailPanel } from "./graph-detail-panel"
 import { useModKey } from "@/lib/utils"
 
@@ -33,6 +34,9 @@ interface GraphAreaProps {
   onEditAnnotation: (id: string, annotation: string) => void
   highlightedBlockId?: string | null
   onHighlight?: (id: string | null) => void
+  contradictions?: Contradiction[]
+  isDetectingTensions?: boolean
+  onDetectTensions?: () => void
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -208,6 +212,9 @@ export function GraphArea({
   onEditAnnotation,
   highlightedBlockId,
   onHighlight,
+  contradictions = [],
+  isDetectingTensions = false,
+  onDetectTensions,
 }: GraphAreaProps) {
   const mod = useModKey()
   const containerRef = React.useRef<HTMLDivElement>(null)
@@ -221,9 +228,10 @@ export function GraphArea({
   const [dims, setDims]   = React.useState({ w: 900, h: 600 })
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
   const [hoveredId,  setHoveredId]  = React.useState<string | null>(null)
-  const [tooltip,    setTooltip]    = React.useState<{ id: string; x: number; y: number } | null>(null)
-  const [transform,  setTransform]  = React.useState({ x: 0, y: 0, k: 1 })
-  const [filterType, setFilterType] = React.useState<import("@/lib/content-types").ContentType | null>(null)
+  const [tooltip,           setTooltip]           = React.useState<{ id: string; x: number; y: number } | null>(null)
+  const [transform,         setTransform]         = React.useState({ x: 0, y: 0, k: 1 })
+  const [filterType,        setFilterType]        = React.useState<import("@/lib/content-types").ContentType | null>(null)
+  const [contradictionTip,  setContradictionTip]  = React.useState<{ reason: string; x: number; y: number } | null>(null)
 
   const isPanning   = React.useRef(false)
   const didPan      = React.useRef(false)
@@ -592,6 +600,49 @@ export function GraphArea({
               })}
             </g>
 
+            {/* ── Contradiction edges (red dashed) ────────────────────── */}
+            <g>
+              {contradictions.map(c => {
+                const nodeA = nodesRef.current.find(n => n.id === c.blockAId)
+                const nodeB = nodesRef.current.find(n => n.id === c.blockBId)
+                if (!nodeA || !nodeB || nodeA.x == null || nodeA.y == null || nodeB.x == null || nodeB.y == null) return null
+                const mx = (nodeA.x + nodeB.x) / 2
+                const my = (nodeA.y + nodeB.y) / 2
+                return (
+                  <g key={c.id}>
+                    <line
+                      x1={nodeA.x} y1={nodeA.y}
+                      x2={nodeB.x} y2={nodeB.y}
+                      stroke="rgb(239,68,68)"
+                      strokeWidth={1.5}
+                      strokeDasharray="5 4"
+                      strokeOpacity={0.55}
+                      style={{ cursor: "help" }}
+                      onMouseEnter={e => {
+                        const rect = svgRef.current!.getBoundingClientRect()
+                        setContradictionTip({
+                          reason: c.reason,
+                          x: e.clientX - rect.left,
+                          y: e.clientY - rect.top,
+                        })
+                      }}
+                      onMouseLeave={() => setContradictionTip(null)}
+                    />
+                    {/* Mid-point marker */}
+                    <circle
+                      cx={mx} cy={my} r={4}
+                      fill="rgb(239,68,68)"
+                      fillOpacity={0.7}
+                      stroke="black"
+                      strokeWidth={0.5}
+                      strokeOpacity={0.4}
+                      style={{ pointerEvents: "none" }}
+                    />
+                  </g>
+                )
+              })}
+            </g>
+
             {/* ── Nodes ────────────────────────────────────────────────── */}
             <g>
               {nodesRef.current.map(node => {
@@ -604,8 +655,11 @@ export function GraphArea({
                   node.id !== focalId &&
                   (!connectedToFocal || !connectedToFocal.has(node.id))
                 const isDimmed = isDimmedByFilter || isDimmedByFocus
-                const isEnriching = node.block?.isEnriching
-                const isHub       = node.degree >= 3 && !node.isSynthesis
+                const isEnriching    = node.block?.isEnriching
+                const isHub          = node.degree >= 3 && !node.isSynthesis
+                const isContradicted = !node.isSynthesis && contradictions.some(
+                  c => c.blockAId === node.id || c.blockBId === node.id
+                )
 
                 const r      = node.isSynthesis ? R_SYNTH : calcR(node.degree, maxDeg)
                 const config = node.block ? CONTENT_TYPE_CONFIG[node.block.contentType] : null
@@ -676,6 +730,18 @@ export function GraphArea({
                         <circle r={r + 16} fill="none" stroke="var(--type-thesis)" strokeWidth={0.5} strokeOpacity={0.14} />
                         <circle r={r + 30} fill="none" stroke="var(--type-thesis)" strokeWidth={0.5} strokeOpacity={0.06} />
                       </>
+                    )}
+
+                    {/* Contradiction ring */}
+                    {isContradicted && (
+                      <circle
+                        r={r + 7}
+                        fill="none"
+                        stroke="rgb(239,68,68)"
+                        strokeWidth={1.2}
+                        strokeOpacity={0.50}
+                        strokeDasharray="4 3"
+                      />
                     )}
 
                     {/* Hub degree indicator ring (for well-connected nodes) */}
@@ -847,12 +913,13 @@ export function GraphArea({
           </span>
         </div>
 
-        {/* ── Top bar: node count + reset view ─────────────────────────── */}
+        {/* ── Top bar: node count + reset view + tensions ──────────────── */}
         {blocks.length > 0 && (
           <div className="absolute top-4 left-4 flex items-center gap-3">
             <span className="font-mono text-[8px] text-muted-foreground/22 uppercase tracking-widest pointer-events-none">
               {blocks.length} node{blocks.length !== 1 ? "s" : ""}
               {ghostNote ? " · synthesis active" : ""}
+              {contradictions.length > 0 ? ` · ${contradictions.length} tension${contradictions.length !== 1 ? "s" : ""}` : ""}
             </span>
             <button
               onClick={resetView}
@@ -861,6 +928,30 @@ export function GraphArea({
             >
               reset
             </button>
+            {onDetectTensions && (
+              <button
+                onClick={onDetectTensions}
+                disabled={isDetectingTensions}
+                className="font-mono text-[8px] uppercase tracking-widest transition-colors disabled:opacity-30"
+                style={{ color: contradictions.length > 0 ? "rgb(239,68,68)" : undefined }}
+                title="Detect contradictions between notes"
+              >
+                {isDetectingTensions ? "detecting..." : contradictions.length > 0 ? "re-detect" : "detect tensions"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ── Contradiction tooltip ─────────────────────────────────────── */}
+        {contradictionTip && (
+          <div
+            className="absolute z-50 pointer-events-none"
+            style={{ left: contradictionTip.x + 10, top: contradictionTip.y - 40 }}
+          >
+            <div className="rounded-sm bg-red-950/90 border border-red-500/30 px-2.5 py-1.5 shadow-lg max-w-[220px]">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-red-400/70 mb-0.5">Tension</p>
+              <p className="text-[11px] text-red-200/80 leading-snug">{contradictionTip.reason}</p>
+            </div>
           </div>
         )}
 
