@@ -10,6 +10,7 @@ import { StatusBar } from "@/components/status-bar"
 import { GhostPanel, type GhostNote } from "@/components/ghost-panel"
 import { ChatPanel } from "@/components/chat-panel"
 import { ReportPanel } from "@/components/report-panel"
+import { FileImportPanel } from "@/components/file-import-panel"
 import { VimInput } from "@/components/vim-input"
 import { IntroModal } from "@/components/intro-modal"
 import type { TextBlock } from "@/components/tile-card"
@@ -50,8 +51,9 @@ export default function Page() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isIndexOpen, setIsIndexOpen] = useState(false)
   const [isGhostPanelOpen, setIsGhostPanelOpen] = useState(false)
-  const [isChatPanelOpen, setIsChatPanelOpen]     = useState(false)
+  const [isChatPanelOpen, setIsChatPanelOpen]       = useState(false)
   const [isReportPanelOpen, setIsReportPanelOpen]   = useState(false)
+  const [isImportPanelOpen, setIsImportPanelOpen]   = useState(false)
   const [isDetectingTensions, setIsDetectingTensions] = useState(false)
   const [viewMode, setViewMode] = useState<"tiling" | "kanban" | "graph">("tiling")
   const [isCommandKOpen, setIsCommandKOpen] = useState(false)
@@ -661,6 +663,17 @@ export default function Page() {
     [activeProjectId, pushHistory, updateActiveProject, enrichBlock]
   )
 
+  /**
+   * Receives the chunks selected in the FileImportPanel and adds each one as
+   * a new canvas note, flowing through the normal AI enrichment pipeline.
+   * A small stagger (80 ms per note) prevents flooding the OpenRouter API.
+   */
+  const handleAddChunks = useCallback((chunks: string[]) => {
+    chunks.forEach((text, i) => {
+      setTimeout(() => addBlock(text), i * 80)
+    })
+  }, [addBlock])
+
   const deleteBlock = useCallback((id: string) => {
     pushHistory(activeProjectId, blocksRef.current)
     updateActiveProject(p => ({
@@ -840,6 +853,8 @@ export default function Page() {
       setIsSidebarOpen(false)
       setIsIndexOpen(false)
       setIsReportPanelOpen(prev => !prev)
+    } else if (cmd === "import-file") {
+      setIsImportPanelOpen(true)
     } else if (cmd === "detect-tensions") {
       // Run contradiction detection across the active project's blocks
       runContradictionDetection()
@@ -1069,6 +1084,13 @@ export default function Page() {
         onClose={() => setIsIndexOpen(false)}
         isOpen={isIndexOpen}
         viewMode={viewMode}
+      />
+
+      {/* PDF / DOCX / TXT import panel */}
+      <FileImportPanel
+        isOpen={isImportPanelOpen}
+        onClose={() => setIsImportPanelOpen(false)}
+        onAddChunks={handleAddChunks}
       />
 
       {/* First-visit intro video modal */}

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   Trello, Grid, Trash2, Clipboard, Download,
   FolderOpen, FolderPlus, BookOpen, Sparkles, MessageSquare, FileText, Zap,
-  FolderDown, FolderInput, GitFork
+  FolderDown, FolderInput, GitFork, FileUp,
 } from "lucide-react"
 import { Command } from "cmdk"
 import { useModKey } from "@/lib/utils"
@@ -55,6 +55,7 @@ export function VimInput({ onSubmit, onCommand, isCommandKOpen, setIsCommandKOpe
     { id: "chat",           icon: MessageSquare, label: "Ask your canvas", sub: "RAG chat"        },
     { id: "report",          icon: FileText,      label: "Research Report",  sub: "AI-generated .md"  },
     { id: "detect-tensions", icon: Zap,           label: "Detect Tensions",  sub: "find contradictions" },
+    { id: "import-file",     icon: FileUp,         label: "Import File",      sub: "pdf · docx · txt"   },
   ], [])
 
   // ── Filtered items ──────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ export function VimInput({ onSubmit, onCommand, isCommandKOpen, setIsCommandKOpe
   // Section 2: actions [viewCount+navCount .. total)
   const sections = React.useMemo(() => [
     { start: 0,                    count: viewCount,   cols: 3 },
-    { start: viewCount,            count: navCount,    cols: 4 },
+    { start: viewCount,            count: navCount,    cols: 4 }, // 4-wide grid fits up to 8 nav items in 2 rows
     { start: viewCount + navCount, count: actionCount, cols: 5 },
   ], [viewCount, navCount, actionCount])
 
