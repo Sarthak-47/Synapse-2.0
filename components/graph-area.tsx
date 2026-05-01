@@ -158,6 +158,31 @@ function buildGraph(
   return { nodes, links }
 }
 
+const hullLine = d3.line<[number, number]>()
+  .x(d => d[0])
+  .y(d => d[1])
+  .curve(d3.curveCatmullRomClosed.alpha(0.5))
+
+function smoothHull(nodes: SimNode[], maxDeg: number): string | null {
+  if (nodes.length === 0) return null
+  const pts: [number, number][] = []
+  for (const n of nodes) {
+    if (n.x == null || n.y == null) continue
+    const r = calcR(n.degree, maxDeg) + 38
+    const d = r * 0.707
+    pts.push(
+      [n.x + r, n.y], [n.x - r, n.y],
+      [n.x, n.y + r], [n.x, n.y - r],
+      [n.x + d, n.y + d], [n.x - d, n.y + d],
+      [n.x + d, n.y - d], [n.x - d, n.y - d],
+    )
+  }
+  if (pts.length < 3) return null
+  const hull = d3.polygonHull(pts)
+  if (!hull) return null
+  return hullLine(hull) ?? null
+}
+
 /** Quadratic bezier arcing gently outward from the midpoint. */
 function arcPath(sx: number, sy: number, tx: number, ty: number, cx: number, cy: number): string {
   const mx = (sx + tx) / 2
@@ -198,6 +223,7 @@ export function GraphArea({
   const [hoveredId,  setHoveredId]  = React.useState<string | null>(null)
   const [tooltip,    setTooltip]    = React.useState<{ id: string; x: number; y: number } | null>(null)
   const [transform,  setTransform]  = React.useState({ x: 0, y: 0, k: 1 })
+  const [filterType, setFilterType] = React.useState<import("@/lib/content-types").ContentType | null>(null)
 
   const isPanning   = React.useRef(false)
   const didPan      = React.useRef(false)
@@ -387,6 +413,31 @@ export function GraphArea({
   const cy = dims.h / 2
   const { x: tx, y: ty, k: tk } = transform
 
+  // Hull groups — computed each render since node positions update via forceUpdate
+  const hullGroups = new Map<import("@/lib/content-types").ContentType, SimNode[]>()
+  for (const node of nodesRef.current) {
+    if (!node.block || node.isSynthesis) continue
+    const t = node.block.contentType
+    if (!hullGroups.has(t)) hullGroups.set(t, [])
+    hullGroups.get(t)!.push(node)
+  }
+
+  // Reset view: fit all nodes into the viewport
+  const resetView = () => {
+    const nodes = nodesRef.current.filter(n => n.x != null && n.y != null)
+    if (nodes.length === 0) { setTransform({ x: 0, y: 0, k: 1 }); return }
+    const xs = nodes.map(n => n.x!)
+    const ys = nodes.map(n => n.y!)
+    const minX = Math.min(...xs) - 60
+    const maxX = Math.max(...xs) + 60
+    const minY = Math.min(...ys) - 60
+    const maxY = Math.max(...ys) + 60
+    const k = Math.min(0.95, Math.min(dims.w / (maxX - minX), dims.h / (maxY - minY)))
+    const x = dims.w / 2 - k * ((minX + maxX) / 2)
+    const y = dims.h / 2 - k * ((minY + maxY) / 2)
+    setTransform({ x, y, k })
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">
@@ -477,6 +528,30 @@ export function GraphArea({
 
           <g transform={`translate(${tx},${ty}) scale(${tk})`}>
 
+            {/* ── Category cluster hulls ───────────────────────────────── */}
+            <g style={{ pointerEvents: "none" }}>
+              {Array.from(hullGroups.entries()).map(([type, nodes]) => {
+                if (nodes.length < 2) return null
+                const path = smoothHull(nodes, maxDeg)
+                if (!path) return null
+                const config = CONTENT_TYPE_CONFIG[type]
+                const isFiltered = filterType === type
+                const isOtherFiltered = filterType != null && filterType !== type
+                return (
+                  <path
+                    key={type}
+                    d={path}
+                    fill={config.accentVar}
+                    fillOpacity={isOtherFiltered ? 0.01 : isFiltered ? 0.10 : 0.045}
+                    stroke={config.accentVar}
+                    strokeOpacity={isOtherFiltered ? 0.03 : isFiltered ? 0.30 : 0.12}
+                    strokeWidth={isFiltered ? 1.5 : 1}
+                    style={{ transition: "fill-opacity 0.2s, stroke-opacity 0.2s" }}
+                  />
+                )
+              })}
+            </g>
+
             {/* ── Links ────────────────────────────────────────────────── */}
             <g>
               {linksRef.current.map((link, i) => {
@@ -486,9 +561,12 @@ export function GraphArea({
                 const [sx, sy, tx2, ty2] = [s.x, s.y, t.x, t.y]
 
                 const isSynth = (link as SimLink).isSynthesisLink
-                const dimmed = focalId != null &&
+                const dimmedByFilter = filterType != null && !isSynth &&
+                  s.block?.contentType !== filterType && t.block?.contentType !== filterType
+                const dimmedByFocus  = filterType == null && focalId != null &&
                   s.id !== focalId && t.id !== focalId
-                const highlighted = focalId != null && !dimmed && !isSynth
+                const dimmed = dimmedByFilter || dimmedByFocus
+                const highlighted = !dimmed && focalId != null && !isSynth
 
                 const d = isSynth
                   ? `M ${sx} ${sy} L ${tx2} ${ty2}`
@@ -521,9 +599,11 @@ export function GraphArea({
 
                 const isSelected  = node.id === selectedId
                 const isHovered   = node.id === hoveredId
-                const isDimmed = focalId != null && !isHovered &&
+                const isDimmedByFilter = filterType != null && !node.isSynthesis && node.block?.contentType !== filterType
+                const isDimmedByFocus  = filterType == null && focalId != null && !isHovered &&
                   node.id !== focalId &&
                   (!connectedToFocal || !connectedToFocal.has(node.id))
+                const isDimmed = isDimmedByFilter || isDimmedByFocus
                 const isEnriching = node.block?.isEnriching
                 const isHub       = node.degree >= 3 && !node.isSynthesis
 
@@ -677,6 +757,23 @@ export function GraphArea({
                       />
                     )}
 
+                    {/* Node text label — fades in at normal zoom */}
+                    {!node.isSynthesis && tk >= 0.65 && (
+                      <text
+                        y={r + 14}
+                        textAnchor="middle"
+                        dominantBaseline="hanging"
+                        fontSize={Math.max(8, Math.min(11, 9 / tk))}
+                        fontFamily="monospace"
+                        fill="white"
+                        fillOpacity={Math.min(0.55, (tk - 0.55) * 2.2)}
+                        style={{ pointerEvents: "none", userSelect: "none" }}
+                      >
+                        {(node.block?.text ?? "").slice(0, 26).trimEnd()}
+                        {(node.block?.text ?? "").length > 26 ? "..." : ""}
+                      </text>
+                    )}
+
                   </g>
                 )
               })}
@@ -750,12 +847,65 @@ export function GraphArea({
           </span>
         </div>
 
+        {/* ── Top bar: node count + reset view ─────────────────────────── */}
         {blocks.length > 0 && (
-          <div className="absolute top-4 left-4 pointer-events-none">
-            <span className="font-mono text-[8px] text-muted-foreground/22 uppercase tracking-widest">
+          <div className="absolute top-4 left-4 flex items-center gap-3">
+            <span className="font-mono text-[8px] text-muted-foreground/22 uppercase tracking-widest pointer-events-none">
               {blocks.length} node{blocks.length !== 1 ? "s" : ""}
               {ghostNote ? " · synthesis active" : ""}
             </span>
+            <button
+              onClick={resetView}
+              className="font-mono text-[8px] text-muted-foreground/30 uppercase tracking-widest hover:text-muted-foreground/60 transition-colors"
+              title="Reset view"
+            >
+              reset
+            </button>
+          </div>
+        )}
+
+        {/* ── Category legend ───────────────────────────────────────────── */}
+        {hullGroups.size > 1 && (
+          <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
+            {Array.from(hullGroups.entries())
+              .sort((a, b) => b[1].length - a[1].length)
+              .map(([type, nodes]) => {
+                const config = CONTENT_TYPE_CONFIG[type]
+                const isActive = filterType === type
+                return (
+                  <button
+                    key={type}
+                    onClick={() => setFilterType(prev => prev === type ? null : type)}
+                    className="flex items-center gap-1.5 rounded-sm px-1.5 py-0.5 transition-all"
+                    style={{
+                      opacity: filterType != null && !isActive ? 0.3 : 1,
+                      background: isActive ? config.accentVar + "20" : "transparent",
+                    }}
+                  >
+                    <span
+                      className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ background: config.accentVar }}
+                    />
+                    <span
+                      className="font-mono text-[8px] uppercase tracking-widest"
+                      style={{ color: isActive ? config.accentVar : "rgb(var(--muted-foreground) / 0.45)" }}
+                    >
+                      {config.label}
+                    </span>
+                    <span className="font-mono text-[7px]" style={{ color: "rgb(var(--muted-foreground) / 0.25)" }}>
+                      {nodes.length}
+                    </span>
+                  </button>
+                )
+              })}
+            {filterType != null && (
+              <button
+                onClick={() => setFilterType(null)}
+                className="font-mono text-[7px] uppercase tracking-widest text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors mt-0.5 pr-1.5"
+              >
+                clear
+              </button>
+            )}
           </div>
         )}
 
