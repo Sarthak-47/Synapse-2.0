@@ -162,18 +162,40 @@ function buildGraph(
   return { nodes, links }
 }
 
+// ─── Hull rendering helpers ───────────────────────────────────────────────────
+
+/**
+ * D3 line generator configured for Catmull-Rom closed curves.
+ * alpha: 0.5 is the "centripetal" parameterisation which produces smooth,
+ * self-intersection-free curves — important for concave hull shapes.
+ */
 const hullLine = d3.line<[number, number]>()
   .x(d => d[0])
   .y(d => d[1])
   .curve(d3.curveCatmullRomClosed.alpha(0.5))
 
+/**
+ * Computes an SVG path string for a smooth convex hull enclosing a group of nodes.
+ *
+ * How it works:
+ *   1. For each node, generate 8 sample points on a circle of radius = node
+ *      radius + 38px padding (N/S/E/W + four diagonals at 45°). This ensures
+ *      the hull encloses the full visual disc of the node, not just its centre.
+ *   2. Run d3.polygonHull (Graham scan) on all sampled points to get the convex
+ *      hull polygon.
+ *   3. Trace a Catmull-Rom closed curve through the hull vertices for a smooth
+ *      organic shape rather than sharp-cornered polygon.
+ *
+ * Returns null if fewer than 3 points are available (hull is degenerate).
+ */
 function smoothHull(nodes: SimNode[], maxDeg: number): string | null {
   if (nodes.length === 0) return null
   const pts: [number, number][] = []
   for (const n of nodes) {
     if (n.x == null || n.y == null) continue
-    const r = calcR(n.degree, maxDeg) + 38
-    const d = r * 0.707
+    const r = calcR(n.degree, maxDeg) + 38   // outer radius including padding
+    const d = r * 0.707                        // diagonal distance (r * cos 45°)
+    // 8 sample points per node: cardinal + intercardinal directions
     pts.push(
       [n.x + r, n.y], [n.x - r, n.y],
       [n.x, n.y + r], [n.x, n.y - r],
@@ -421,7 +443,9 @@ export function GraphArea({
   const cy = dims.h / 2
   const { x: tx, y: ty, k: tk } = transform
 
-  // Hull groups — computed each render since node positions update via forceUpdate
+  // Hull groups — built each render pass because node positions change on every
+  // simulation tick (forceUpdate fires). Synthesis nodes are excluded since they
+  // have no content type and should not be included in any hull region.
   const hullGroups = new Map<import("@/lib/content-types").ContentType, SimNode[]>()
   for (const node of nodesRef.current) {
     if (!node.block || node.isSynthesis) continue
@@ -430,7 +454,16 @@ export function GraphArea({
     hullGroups.get(t)!.push(node)
   }
 
-  // Reset view: fit all nodes into the viewport
+  /**
+   * Fits all nodes into the viewport by computing the bounding box of current
+   * node positions and deriving the correct scale (k) and translation (x, y).
+   *
+   * Steps:
+   *   1. Find min/max x and y across all positioned nodes, adding 60px padding.
+   *   2. Compute the scale that fits the bounding box within the SVG dimensions,
+   *      capped at 0.95 so there is always a small margin.
+   *   3. Translate so the bounding box centre aligns with the viewport centre.
+   */
   const resetView = () => {
     const nodes = nodesRef.current.filter(n => n.x != null && n.y != null)
     if (nodes.length === 0) { setTransform({ x: 0, y: 0, k: 1 }); return }
@@ -537,6 +570,14 @@ export function GraphArea({
           <g transform={`translate(${tx},${ty}) scale(${tk})`}>
 
             {/* ── Category cluster hulls ───────────────────────────────── */}
+            {/*
+              One smooth convex hull per content type, drawn behind all nodes.
+              pointerEvents: none so hulls never intercept node drag/click events.
+              When filterType is active:
+                - The selected type's hull brightens (fillOpacity 0.10, stroke 0.30).
+                - All other hulls fade to near-invisible (0.01 / 0.03).
+              Groups with fewer than 2 nodes are skipped (hull requires >= 3 points).
+            */}
             <g style={{ pointerEvents: "none" }}>
               {Array.from(hullGroups.entries()).map(([type, nodes]) => {
                 if (nodes.length < 2) return null
@@ -601,6 +642,18 @@ export function GraphArea({
             </g>
 
             {/* ── Contradiction edges (red dashed) ────────────────────── */}
+            {/*
+              One <line> per detected contradiction pair, rendered above regular
+              edges but below nodes. Each line:
+                - Is dashed (5px on, 4px off) and semi-transparent red.
+                - Has onMouseEnter/Leave handlers that show a dark red tooltip
+                  with the one-sentence reason for the contradiction.
+                - Has a small filled circle at the midpoint as a visual anchor
+                  (the circle has pointerEvents: none so it doesn't block the
+                  line's hover events).
+              Nodes that appear in any contradiction also receive a red dashed
+              ring (see isContradicted in the Nodes section below).
+            */}
             <g>
               {contradictions.map(c => {
                 const nodeA = nodesRef.current.find(n => n.id === c.blockAId)
@@ -628,7 +681,7 @@ export function GraphArea({
                       }}
                       onMouseLeave={() => setContradictionTip(null)}
                     />
-                    {/* Mid-point marker */}
+                    {/* Mid-point marker — visual anchor for the contradiction edge */}
                     <circle
                       cx={mx} cy={my} r={4}
                       fill="rgb(239,68,68)"
@@ -956,6 +1009,16 @@ export function GraphArea({
         )}
 
         {/* ── Category legend ───────────────────────────────────────────── */}
+        {/*
+          Floating legend in the top-right listing all content types present in
+          the graph (sorted by node count, most common first). Only shown when
+          there are at least 2 distinct types.
+
+          Clicking a type sets filterType which:
+            - Brightens that type's hull and dims all others.
+            - Dims nodes and edges not belonging to that type.
+          Clicking the active type again (or the "clear" button) resets to no filter.
+        */}
         {hullGroups.size > 1 && (
           <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
             {Array.from(hullGroups.entries())

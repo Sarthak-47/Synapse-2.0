@@ -1,5 +1,25 @@
 "use client"
 
+/**
+ * report-panel.tsx — AI Research Report Panel
+ *
+ * A 360 px sliding side panel that generates a structured prose research report
+ * from all canvas notes. The report streams live from the generateReport()
+ * async generator in lib/ai-report.ts and is rendered as markdown.
+ *
+ * Features:
+ *   - Generate / Regenerate button triggers a fresh report generation.
+ *   - Stop button (shown during generation) aborts the stream cleanly via
+ *     AbortController, preserving whatever has been generated so far.
+ *   - Download saves the current report as a named .md file.
+ *   - Copy puts the markdown text on the clipboard with a 2-second "Copied"
+ *     confirmation state.
+ *   - A blinking cursor is shown at the end of the report while streaming.
+ *   - The panel auto-scrolls to the bottom as new content arrives.
+ *   - The panel slides in via CSS width/opacity transition — same pattern used
+ *     by ChatPanel and GhostPanel.
+ */
+
 import * as React from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -9,6 +29,9 @@ import { downloadMarkdown, copyToClipboard } from "@/lib/export"
 import type { TextBlock } from "@/components/tile-card"
 
 // ── Markdown render components ────────────────────────────────────────────────
+// Each element is styled to match the panel's dark theme. The report uses
+// h2 headings for sections, blockquotes for direct quotes from the notes, and
+// horizontal rules to separate major sections.
 
 const MdComponents = {
   h1: ({ children }: { children?: React.ReactNode }) => (
@@ -29,6 +52,7 @@ const MdComponents = {
   em: ({ children }: { children?: React.ReactNode }) => (
     <em className="italic text-foreground/70">{children}</em>
   ),
+  // blockquote is used for direct quotes lifted from the notes
   blockquote: ({ children }: { children?: React.ReactNode }) => (
     <blockquote className="border-l-2 border-primary/40 pl-3 my-2 text-foreground/60 italic text-[12px]">
       {children}
@@ -52,34 +76,43 @@ const MdComponents = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface ReportPanelProps {
-  projectName: string
+  projectName: string   // used as the report title and in the download filename
   blocks: TextBlock[]
   isOpen: boolean
   onClose: () => void
 }
 
 export function ReportPanel({ projectName, blocks, isOpen, onClose }: ReportPanelProps) {
-  const [report, setReport]         = React.useState("")
+  const [report, setReport]             = React.useState("")
   const [isGenerating, setIsGenerating] = React.useState(false)
-  const [isDone, setIsDone]         = React.useState(false)
-  const [error, setError]           = React.useState<string | null>(null)
-  const [copied, setCopied]         = React.useState(false)
+  // isDone distinguishes "generation finished" from "never started" so the
+  // Download and Copy buttons only appear when there is a complete (or partial) report.
+  const [isDone, setIsDone]             = React.useState(false)
+  const [error, setError]               = React.useState<string | null>(null)
+  // copied drives the 2-second "Copied" feedback on the clipboard button
+  const [copied, setCopied]             = React.useState(false)
 
   const abortRef  = React.useRef<AbortController | null>(null)
   const scrollRef = React.useRef<HTMLDivElement>(null)
 
-  // Auto-scroll while streaming
+  // Auto-scroll to the bottom while the report is being generated
   React.useEffect(() => {
     if (isGenerating && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [report, isGenerating])
 
-  // Stop generation when panel closes
+  // Abort any in-flight generation when the panel is closed
   React.useEffect(() => {
     if (!isOpen) abortRef.current?.abort()
   }, [isOpen])
 
+  /**
+   * Starts (or restarts) report generation.
+   * Resets all previous state, creates a new AbortController, then iterates
+   * the generateReport() async generator, appending each chunk to `acc` and
+   * pushing it into React state for live rendering.
+   */
   const startGeneration = async () => {
     if (isGenerating || blocks.length === 0) return
     setReport("")
@@ -94,11 +127,13 @@ export function ReportPanel({ projectName, blocks, isOpen, onClose }: ReportPane
     try {
       for await (const chunk of generateReport(projectName, blocks, ctrl.signal)) {
         acc += chunk
-        setReport(acc)
+        setReport(acc)  // update state on every chunk for live preview
       }
       setIsDone(true)
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") {
+        // User pressed Stop — mark done if there is any content, so
+        // Download and Copy remain available for the partial report.
         setIsDone(acc.length > 0)
       } else {
         setError(err instanceof Error ? err.message : "Unknown error")
@@ -108,15 +143,18 @@ export function ReportPanel({ projectName, blocks, isOpen, onClose }: ReportPane
     }
   }
 
+  /** Aborts the current generation stream. */
   const stopGeneration = () => {
     abortRef.current?.abort()
   }
 
+  /** Downloads the current report as "<project-name>-report.md". */
   const handleDownload = () => {
     const filename = `${projectName.toLowerCase().replace(/\s+/g, "-")}-report.md`
     downloadMarkdown(filename, report)
   }
 
+  /** Copies markdown to clipboard and shows a brief "Copied" confirmation. */
   const handleCopy = async () => {
     const ok = await copyToClipboard(report)
     if (ok) {
@@ -136,7 +174,7 @@ export function ReportPanel({ projectName, blocks, isOpen, onClose }: ReportPane
     >
       <div className="w-[360px] flex flex-col h-full">
 
-        {/* Header */}
+        {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="flex h-10 items-center justify-between border-b border-border bg-card/5 px-3 py-1.5 shrink-0">
           <div className="flex items-center gap-2">
             <div className="flex items-center justify-center h-5 w-5 bg-primary/10 rounded-sm">
@@ -159,9 +197,10 @@ export function ReportPanel({ projectName, blocks, isOpen, onClose }: ReportPane
           </button>
         </div>
 
-        {/* Toolbar */}
+        {/* ── Toolbar: Generate / Stop / Download / Copy ───────────────── */}
         <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/50 bg-card/3 shrink-0">
           {isGenerating ? (
+            // Show Stop button while stream is active
             <button
               onClick={stopGeneration}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-red-500/15 border border-red-500/25 text-red-400/80 hover:bg-red-500/25 transition-colors font-mono text-[10px] uppercase tracking-wide"
@@ -170,6 +209,7 @@ export function ReportPanel({ projectName, blocks, isOpen, onClose }: ReportPane
               Stop
             </button>
           ) : (
+            // Show Generate (first time) or Regenerate (if a report exists)
             <button
               onClick={startGeneration}
               disabled={blocks.length === 0}
@@ -180,6 +220,7 @@ export function ReportPanel({ projectName, blocks, isOpen, onClose }: ReportPane
             </button>
           )}
 
+          {/* Download and Copy are only shown once generation is done */}
           {isDone && report && (
             <>
               <button
@@ -200,8 +241,10 @@ export function ReportPanel({ projectName, blocks, isOpen, onClose }: ReportPane
           )}
         </div>
 
-        {/* Body */}
+        {/* ── Report body ─────────────────────────────────────────────────── */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar px-4 py-3">
+
+          {/* Empty state — before generation has started */}
           {!report && !isGenerating && !error && (
             <div className="flex flex-col items-center justify-center h-40 gap-3 opacity-25">
               <FileText className="h-6 w-6" />
@@ -213,17 +256,20 @@ export function ReportPanel({ projectName, blocks, isOpen, onClose }: ReportPane
             </div>
           )}
 
+          {/* Error banner */}
           {error && (
             <div className="rounded-sm bg-red-500/10 border border-red-500/20 px-2.5 py-2 text-[11px] text-red-400/80 font-mono mt-2">
               {error}
             </div>
           )}
 
+          {/* Streaming markdown preview — updates on every chunk */}
           {report && (
             <div className="prose prose-invert prose-sm max-w-none">
               <ReactMarkdown remarkPlugins={[remarkGfm]} components={MdComponents as any}>
                 {report}
               </ReactMarkdown>
+              {/* Blinking cursor at the end while streaming */}
               {isGenerating && (
                 <span className="inline-block w-1.5 h-3.5 bg-primary/70 ml-0.5 align-middle animate-pulse" />
               )}
@@ -231,7 +277,7 @@ export function ReportPanel({ projectName, blocks, isOpen, onClose }: ReportPane
           )}
         </div>
 
-        {/* Footer hint */}
+        {/* ── Footer hint ─────────────────────────────────────────────────── */}
         <div className="border-t border-border/40 px-3 py-1.5 shrink-0">
           <p className="font-mono text-[8px] text-muted-foreground/20 uppercase tracking-widest">
             AI synthesises your notes into prose

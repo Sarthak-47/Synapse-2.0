@@ -1,5 +1,26 @@
 "use client"
 
+/**
+ * chat-panel.tsx — "Ask Your Canvas" Chat Panel
+ *
+ * A 300 px sliding side panel that lets the user ask natural-language questions
+ * about their canvas notes. Answers are streamed live from the OpenRouter RAG
+ * engine defined in lib/ai-chat.ts.
+ *
+ * Key behaviours:
+ *   - Each assistant reply streams word-by-word via an async generator. A
+ *     blinking cursor is shown while streaming is in progress.
+ *   - An AbortController is created per request so the Stop button can cancel
+ *     mid-stream cleanly without leaving a dangling fetch connection.
+ *   - After streaming completes, parseCitedIndices() extracts [N] citation
+ *     markers from the full reply. Each cited note becomes a clickable pill
+ *     that calls onHighlight, which scrolls the canvas to that note.
+ *   - The textarea auto-resizes as the user types (up to 100 px max height).
+ *     Enter sends; Shift+Enter inserts a newline.
+ *   - The panel is animated via CSS width/opacity transition — same slide-in
+ *     pattern used by GhostPanel and ReportPanel.
+ */
+
 import * as React from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -9,11 +30,16 @@ import type { TextBlock } from "@/components/tile-card"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+/**
+ * A single message in the conversation history.
+ * citedIndices holds 0-based block indices parsed from [N] markers in the reply.
+ * isStreaming is true while the assistant is still generating text.
+ */
 interface ChatMessage {
   id: string
   role: "user" | "assistant"
   content: string
-  citedIndices?: number[]
+  citedIndices?: number[]   // 0-based indices into the blocks array
   isStreaming?: boolean
 }
 
@@ -21,10 +47,13 @@ interface ChatPanelProps {
   blocks: TextBlock[]
   isOpen: boolean
   onClose: () => void
+  /** Called when the user clicks a citation pill — parent scrolls to that block. */
   onHighlight: (id: string | null) => void
 }
 
-// ── Markdown components ───────────────────────────────────────────────────────
+// ── Markdown render components ────────────────────────────────────────────────
+// Custom renderers keep the markdown styled consistently with the panel's
+// dark theme rather than using default prose defaults.
 
 const MdComponents = {
   p:      ({ children }: { children?: React.ReactNode }) => <p className="mb-2 last:mb-0">{children}</p>,
@@ -41,34 +70,42 @@ const MdComponents = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelProps) {
-  const [messages, setMessages]   = React.useState<ChatMessage[]>([])
-  const [input, setInput]         = React.useState("")
-  const [isStreaming, setIsStreaming] = React.useState(false)
-  const [error, setError]         = React.useState<string | null>(null)
+  const [messages, setMessages]       = React.useState<ChatMessage[]>([])
+  const [input, setInput]             = React.useState("")
+  const [isStreaming, setIsStreaming]  = React.useState(false)
+  const [error, setError]             = React.useState<string | null>(null)
 
+  // abortRef holds the current request's AbortController so stopStream() can
+  // cancel it without needing it in component state (which would trigger re-renders).
   const abortRef    = React.useRef<AbortController | null>(null)
   const scrollRef   = React.useRef<HTMLDivElement>(null)
   const inputRef    = React.useRef<HTMLTextAreaElement>(null)
+  // streamingId tracks which assistant message is currently being written to,
+  // so partial updates can target the right message in the array.
   const streamingId = React.useRef<string | null>(null)
 
-  // Auto-scroll on new content
+  // Auto-scroll the message list to the bottom on every new chunk
   React.useEffect(() => {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
   }, [messages])
 
-  // Focus input when panel opens
+  // Focus the input 150 ms after the panel opens (transition delay)
   React.useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 150)
     }
   }, [isOpen])
 
-  // Stop any running stream when panel closes
+  // Abort any in-flight request when the panel is closed
   React.useEffect(() => {
     if (!isOpen) abortRef.current?.abort()
   }, [isOpen])
 
+  /**
+   * Cancels the current stream and marks the in-progress assistant message
+   * as no longer streaming so the blinking cursor disappears.
+   */
   const stopStream = () => {
     abortRef.current?.abort()
     setIsStreaming(false)
@@ -79,6 +116,19 @@ export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelPro
     }
   }
 
+  /**
+   * Sends the user's question to askCanvas() and streams the reply into the
+   * assistant message bubble.
+   *
+   * Steps:
+   *   1. Append a user message and an empty assistant message (isStreaming: true).
+   *   2. For each chunk from the async generator, append to `accumulated` and
+   *      update the assistant message content in place.
+   *   3. On completion, call parseCitedIndices() to extract citation pills.
+   *   4. On AbortError (Stop pressed), leave accumulated content as-is and
+   *      mark the message finished. On other errors, show an error banner and
+   *      remove the empty assistant message.
+   */
   const sendMessage = async () => {
     const question = input.trim()
     if (!question || isStreaming) return
@@ -102,11 +152,12 @@ export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelPro
     try {
       for await (const chunk of askCanvas(question, blocks, ctrl.signal)) {
         accumulated += chunk
+        // Update only the streaming assistant message — other messages are untouched
         setMessages(prev => prev.map(m =>
           m.id === assistantId ? { ...m, content: accumulated } : m
         ))
       }
-      // Finalize — parse citations
+      // Stream finished — extract [N] citation markers and convert to 0-based indices
       const cited = parseCitedIndices(accumulated)
       setMessages(prev => prev.map(m =>
         m.id === assistantId
@@ -115,11 +166,12 @@ export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelPro
       ))
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") {
-        // User stopped — leave content as-is
+        // User pressed Stop — preserve what was generated, just stop the cursor
         setMessages(prev => prev.map(m =>
           m.id === assistantId ? { ...m, isStreaming: false } : m
         ))
       } else {
+        // Genuine error — show banner and remove the incomplete assistant bubble
         const msg = err instanceof Error ? err.message : "Unknown error"
         setError(msg)
         setMessages(prev => prev.filter(m => m.id !== assistantId))
@@ -130,6 +182,7 @@ export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelPro
     }
   }
 
+  // Enter sends; Shift+Enter adds a newline (standard chat convention)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
@@ -148,7 +201,7 @@ export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelPro
     >
       <div className="w-[300px] flex flex-col h-full">
 
-        {/* Header */}
+        {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="flex h-10 items-center justify-between border-b border-border bg-card/5 px-3 py-1.5 shrink-0">
           <div className="flex items-center gap-2">
             <div className="flex items-center justify-center h-5 w-5 bg-primary/10 rounded-sm">
@@ -171,11 +224,12 @@ export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelPro
           </button>
         </div>
 
-        {/* Messages */}
+        {/* ── Message list ────────────────────────────────────────────────── */}
         <div
           ref={scrollRef}
           className="flex-1 overflow-y-auto custom-scrollbar py-3 px-3 space-y-4"
         >
+          {/* Empty state — shown before the first message */}
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-32 gap-3 opacity-25">
               <MessageSquare className="h-5 w-5" />
@@ -185,6 +239,7 @@ export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelPro
             </div>
           )}
 
+          {/* Prompt to add notes if canvas is empty */}
           {blocks.length === 0 && messages.length === 0 && (
             <p className="font-mono text-[9px] text-center text-muted-foreground/30 uppercase tracking-widest mt-2">
               Add some notes first
@@ -193,12 +248,12 @@ export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelPro
 
           {messages.map(msg => (
             <div key={msg.id} className={`flex flex-col gap-1.5 ${msg.role === "user" ? "items-end" : "items-start"}`}>
-              {/* Label */}
+              {/* Role label */}
               <span className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground/30 px-1">
                 {msg.role === "user" ? "you" : "canvas"}
               </span>
 
-              {/* Bubble */}
+              {/* Message bubble */}
               <div
                 className={`rounded-sm px-2.5 py-2 text-sm leading-relaxed max-w-[90%] ${
                   msg.role === "user"
@@ -213,6 +268,7 @@ export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelPro
                         {msg.content || (msg.isStreaming ? " " : "")}
                       </ReactMarkdown>
                     </div>
+                    {/* Blinking cursor shown while the stream is active */}
                     {msg.isStreaming && (
                       <span className="inline-block w-1.5 h-3.5 bg-primary/70 ml-0.5 align-middle animate-pulse" />
                     )}
@@ -222,7 +278,7 @@ export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelPro
                 )}
               </div>
 
-              {/* Citation pills */}
+              {/* Citation pills — one per cited block, shown after streaming ends */}
               {msg.role === "assistant" && !msg.isStreaming && (msg.citedIndices?.length ?? 0) > 0 && (
                 <div className="flex flex-wrap gap-1 px-1">
                   {msg.citedIndices!.map(idx => {
@@ -244,6 +300,7 @@ export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelPro
             </div>
           ))}
 
+          {/* Error banner — shown when the API call fails */}
           {error && (
             <div className="rounded-sm bg-red-500/10 border border-red-500/20 px-2.5 py-2 text-[11px] text-red-400/80 font-mono">
               {error}
@@ -251,9 +308,10 @@ export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelPro
           )}
         </div>
 
-        {/* Input area */}
+        {/* ── Input area ──────────────────────────────────────────────────── */}
         <div className="border-t border-border bg-card/5 p-2 shrink-0">
           <div className="flex items-end gap-2">
+            {/* Auto-resizing textarea — grows up to 100px then scrolls */}
             <textarea
               ref={inputRef}
               value={input}
@@ -269,6 +327,7 @@ export function ChatPanel({ blocks, isOpen, onClose, onHighlight }: ChatPanelPro
                 t.style.height = `${Math.min(t.scrollHeight, 100)}px`
               }}
             />
+            {/* Stop button during streaming; Send button otherwise */}
             {isStreaming ? (
               <button
                 onClick={stopStream}

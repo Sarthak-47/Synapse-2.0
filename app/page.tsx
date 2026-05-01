@@ -549,6 +549,19 @@ export default function Page() {
     }))
   }, [updateActiveProject])
 
+  /**
+   * Runs AI contradiction detection over the active project's blocks and
+   * stores the results on the project so the graph view can render red
+   * dashed edges between contradicting notes.
+   *
+   * Guards:
+   *   - isDetectingTensions prevents concurrent runs (the button is disabled).
+   *   - Requires at least 2 blocks (nothing to compare against otherwise).
+   *   - Errors are swallowed silently; the user can just retry via the button.
+   *
+   * Results are persisted on the project object so they survive panel toggles
+   * and view switches — the graph doesn't lose tension data on re-render.
+   */
   const runContradictionDetection = useCallback(async () => {
     if (isDetectingTensions || blocks.length < 2) return
     setIsDetectingTensions(true)
@@ -556,7 +569,7 @@ export default function Page() {
       const found = await detectContradictions(blocks)
       updateActiveProject(p => ({ ...p, contradictions: found }))
     } catch {
-      // silently fail — user can retry
+      // silently fail — user can retry via the "detect tensions" button
     } finally {
       setIsDetectingTensions(false)
     }
@@ -818,16 +831,20 @@ export default function Page() {
       setIsIndexOpen(false)
       setIsGhostPanelOpen(prev => !prev)
     } else if (cmd === "chat") {
+      // Toggle the RAG chat panel; close other panels to avoid crowding
       setIsSidebarOpen(false)
       setIsIndexOpen(false)
       setIsChatPanelOpen(prev => !prev)
     } else if (cmd === "report") {
+      // Toggle the AI research report panel
       setIsSidebarOpen(false)
       setIsIndexOpen(false)
       setIsReportPanelOpen(prev => !prev)
     } else if (cmd === "detect-tensions") {
+      // Run contradiction detection across the active project's blocks
       runContradictionDetection()
     } else if (cmd === "clear-tensions") {
+      // Remove all stored contradictions (graph edges disappear immediately)
       updateActiveProject(p => ({ ...p, contradictions: [] }))
     } else if (cmd === "clear") clearBlocks()
     else if (cmd === "help") window.open("https://github.com/albingroen/react-cmdk", "_blank")
