@@ -1,0 +1,19 @@
+{
+  "name": "synapse-mcp",
+  "version": "1.0.0",
+  "description": "MCP server that exposes a Synapse canvas to AI clients",
+  "type": "module",
+  "main": "server.js",
+  "bin": {
+    "synapse-mcp": "./server.js"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
