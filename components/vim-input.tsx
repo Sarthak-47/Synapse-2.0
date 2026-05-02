@@ -55,7 +55,7 @@ export function VimInput({ onSubmit, onCommand, isCommandKOpen, setIsCommandKOpe
     { id: "chat",           icon: MessageSquare, label: "Ask your canvas", sub: "RAG chat"        },
     { id: "report",          icon: FileText,      label: "Research Report",  sub: "AI-generated .md"  },
     { id: "detect-tensions", icon: Zap,           label: "Detect Tensions",  sub: "find contradictions" },
-    { id: "import-file",     icon: FileUp,         label: "Import File",      sub: "pdf · docx · txt"   },
+    { id: "import-file",     icon: FileUp,         label: "Import File",      sub: "pdf · pptx · img"  },
   ], [])
 
   // ── Filtered items ──────────────────────────────────────────────────────
