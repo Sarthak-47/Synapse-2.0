@@ -151,16 +151,16 @@ Added "Detect Tensions" entry to the command palette nav items.
 ### What was built
 
 **`mcp-server/server.js`**
-A standalone Node.js MCP server that exposes any exported Synapse canvas (`.nodepad` file) to MCP-compatible AI clients such as Claude Desktop and Cursor.
+A standalone Node.js MCP server that exposes any exported Synapse canvas (`.synapse` file) to MCP-compatible AI clients such as Claude Desktop and Cursor.
 
-Accepts a `--file <path>` argument pointing to a `.nodepad` file. Exposes four tools:
+Accepts a `--file <path>` argument pointing to a `.synapse` file. Exposes four tools:
 
 | Tool | What it does |
 |------|-------------|
 | `get_canvas_summary` | Returns project name, note counts by type, top 10 categories, ghost notes, and 5 most recent notes |
 | `list_notes` | Lists all notes with optional filter by `type` or `category` (substring match) |
 | `search_notes` | Full-text search across note text, annotations, and categories with relevance scoring |
-| `add_note` | Appends a new note to the `.nodepad` file on disk with optional `contentType` |
+| `add_note` | Appends a new note to the `.synapse` file on disk with optional `contentType` |
 
 The server communicates via stdio using the JSON-RPC protocol from `@modelcontextprotocol/sdk`. It reads the file fresh on each tool call (so changes from the app are always visible) and writes back immediately on `add_note`.
 

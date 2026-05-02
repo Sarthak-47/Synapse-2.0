@@ -53,7 +53,7 @@ Synapse is designed around one idea: **AI should augment thinking, not replace i
 
 ### Persistence
 
-All data is stored in `localStorage` — no account, no backend, no tracking. Export and import as `.nodepad` files for backup or transfer between devices.
+All data is stored in `localStorage` — no account, no backend, no tracking. Export and import as `.synapse` files for backup or transfer between devices.
 
 ### MCP Server
 
@@ -102,8 +102,8 @@ Open the command palette with `Cmd+K` (Mac) or `Ctrl+K` (Windows/Linux).
 | `new-project` | Create a new canvas |
 | `export-md` | Export canvas as Markdown |
 | `copy-md` | Copy Markdown to clipboard |
-| `export-nodepad` | Export as `.nodepad` file |
-| `import-nodepad` | Import a `.nodepad` file |
+| `export-synapse` | Export as `.synapse` file |
+| `import-synapse` | Import a `.synapse` file |
 | `clear` | Clear all notes from canvas |
 
 Type anything without a command prefix to add it as a new note. Prefix with `#type` to set the content type directly, e.g. `#claim The earth is 4.5 billion years old`.
@@ -123,7 +123,7 @@ npm install
 
 ### Configure Claude Desktop
 
-Export your canvas as a `.nodepad` file from within the app (command: `export-nodepad`), then add the following to your Claude Desktop config:
+Export your canvas as a `.synapse` file from within the app (command: `export-synapse`), then add the following to your Claude Desktop config:
 
 **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
@@ -136,7 +136,7 @@ Export your canvas as a `.nodepad` file from within the app (command: `export-no
       "args": [
         "/absolute/path/to/Synapse/mcp-server/server.js",
         "--file",
-        "/absolute/path/to/your-project.nodepad"
+        "/absolute/path/to/your-project.synapse"
       ]
     }
   }
@@ -166,7 +166,7 @@ Restart Claude Desktop. You will see Synapse tools available in Claude.
 | Graph | D3 (force simulation, convex hull, Catmull-Rom curves) |
 | AI | OpenRouter (Claude Sonnet 4.5, GPT-4o, Gemini 2.5 Pro, DeepSeek V3, Mistral Small) |
 | MCP | @modelcontextprotocol/sdk |
-| Persistence | localStorage + `.nodepad` JSON format |
+| Persistence | localStorage + `.synapse` JSON format |
 
 ---
 
@@ -193,7 +193,7 @@ lib/
   ai-contradiction.ts   Contradiction detection between notes
   ai-settings.ts        API key and model management
   content-types.ts      14 content type definitions
-  nodepad-format.ts     .nodepad file serialisation
+  nodepad-format.ts     .synapse file serialisation
   export.ts             Markdown export
 mcp-server/
   server.js             Standalone MCP server for AI client integration

@@ -1,7 +1,7 @@
 /**
- * .nodepad file format — full-fidelity project serialisation.
+ * .synapse file format — full-fidelity project serialisation.
  *
- * A .nodepad file is a JSON object with a version field so future schema
+ * A .synapse file is a JSON object with a version field so future schema
  * changes can be handled gracefully. The file contains the complete project
  * state: blocks (with all AI annotations, connections, confidence scores,
  * sub-tasks), collapsed IDs, ghost notes history, and enough context for
@@ -101,7 +101,7 @@ export function serialiseProject(project: {
   }
 }
 
-/** Trigger a browser download of a .nodepad file for the given project. */
+/** Trigger a browser download of a .synapse file for the given project. */
 export function downloadNodepadFile(project: {
   id: string; name: string; blocks: any[]; collapsedIds: string[]
   ghostNotes?: any[]; lastGhostTexts?: string[]
@@ -119,7 +119,7 @@ export function downloadNodepadFile(project: {
     .replace(/[^a-z0-9-]/g, "")
     .slice(0, 60)
   a.href     = url
-  a.download = `${slug || "project"}.nodepad`
+  a.download = `${slug || "project"}.synapse`
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -129,7 +129,7 @@ export function downloadNodepadFile(project: {
 export class NodepadParseError extends Error {}
 
 /**
- * Parse a .nodepad file string and return a project object ready to push
+ * Parse a .synapse file string and return a project object ready to push
  * into the projects list. Always assigns a fresh ID so there are no
  * collisions. Name conflicts get a copy suffix: "My Research (2)".
  */
@@ -150,14 +150,14 @@ export function parseNodepadFile(
   try {
     data = JSON.parse(raw)
   } catch {
-    throw new NodepadParseError("Not a valid .nodepad file — JSON parse failed.")
+    throw new NodepadParseError("Not a valid .synapse file — JSON parse failed.")
   }
 
   if (!data || typeof data !== "object") {
-    throw new NodepadParseError("Not a valid .nodepad file — unexpected root type.")
+    throw new NodepadParseError("Not a valid .synapse file — unexpected root type.")
   }
   if (!data.project || !Array.isArray(data.project.blocks)) {
-    throw new NodepadParseError("Not a valid .nodepad file — missing project.blocks array.")
+    throw new NodepadParseError("Not a valid .synapse file — missing project.blocks array.")
   }
 
   const src = data.project

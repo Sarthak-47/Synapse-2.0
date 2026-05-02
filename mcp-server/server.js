@@ -2,7 +2,7 @@
 /**
  * Synapse MCP Server
  *
- * Exposes a Synapse canvas (.nodepad file) to any MCP-compatible AI client
+ * Exposes a Synapse canvas (.synapse file) to any MCP-compatible AI client
  * (Claude Desktop, Cursor, etc.) via four tools:
  *
  *   get_canvas_summary  - overview of note counts, categories, and themes
@@ -11,14 +11,14 @@
  *   add_note            - append a new note to the canvas file
  *
  * Usage:
- *   node server.js --file /path/to/project.nodepad
+ *   node server.js --file /path/to/project.synapse
  *
  * Claude Desktop config (~/.config/claude/claude_desktop_config.json):
  *   {
  *     "mcpServers": {
  *       "synapse": {
  *         "command": "node",
- *         "args": ["/path/to/synapse/mcp-server/server.js", "--file", "/path/to/project.nodepad"]
+ *         "args": ["/path/to/synapse/mcp-server/server.js", "--file", "/path/to/project.synapse"]
  *       }
  *     }
  *   }
@@ -44,12 +44,12 @@ if (!filePath) {
   process.exit(1)
 }
 
-// ── .nodepad file helpers ─────────────────────────────────────────────────────
+// ── .synapse file helpers ─────────────────────────────────────────────────────
 
 function loadCanvas() {
   const raw  = fs.readFileSync(filePath, "utf-8")
   const data = JSON.parse(raw)
-  if (!data?.project?.blocks) throw new Error("Invalid .nodepad file")
+  if (!data?.project?.blocks) throw new Error("Invalid .synapse file")
   return data
 }
 

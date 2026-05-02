@@ -14,41 +14,6 @@ interface AboutPanelProps {
   onClose: () => void
 }
 
-function CopyEmailButton() {
-  const [copied, setCopied] = useState(false)
-
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText("mskayyali@me.com").then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
-  }, [])
-
-  return (
-    <button
-      onClick={handleCopy}
-      className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest border px-2 py-0.5 rounded-sm transition-all duration-300 cursor-pointer"
-      style={{
-        color:       copied ? "var(--color-emerald-400, #34d399)" : "color-mix(in oklch, var(--primary) 60%, transparent)",
-        borderColor: copied ? "color-mix(in oklch, var(--color-emerald-400, #34d399) 35%, transparent)" : "color-mix(in oklch, var(--primary) 25%, transparent)",
-      }}
-    >
-      <span className="relative flex items-center" style={{ width: "12px", height: "12px" }}>
-        <Mail
-          className="absolute inset-0 transition-all duration-300"
-          style={{ width: "12px", height: "12px", opacity: copied ? 0 : 1, transform: copied ? "scale(0.6)" : "scale(1)" }}
-        />
-        <Check
-          className="absolute inset-0 transition-all duration-300"
-          style={{ width: "12px", height: "12px", opacity: copied ? 1 : 0, transform: copied ? "scale(1)" : "scale(0.6)" }}
-        />
-      </span>
-      <span className="transition-all duration-300" style={{ opacity: copied ? 0.7 : 1 }}>
-        {copied ? "Copied!" : "Copy email"}
-      </span>
-    </button>
-  )
-}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -121,47 +86,19 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
             No chat · No prompts · AI that augments your thinking
           </p>
           <p className="mt-3 text-xs text-muted-foreground/50 flex items-center gap-3 flex-wrap">
-            <span>
-              A design experiment by{" "}
-              <a
-                href="http://mskayyali.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground/70 hover:text-foreground underline underline-offset-2 transition-colors"
-              >
-                Saleh Kayyali
-              </a>
-            </span>
             <a
-              href="[YOUR_DEPLOYED_URL]"
+              href="[https://synapse-sarthak-47.vercel.app/]"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/50 hover:text-foreground border border-white/10 hover:border-white/25 px-2 py-0.5 rounded-sm transition-colors"
             >
               Source code ↗
             </a>
-            <CopyEmailButton />
-          </p>
-          <p className="mt-1.5 text-xs text-muted-foreground/35">
-            This app uses anonymous analytics (Umami) to track feature interactions — views switched, exports, synthesis events. No note content, no personal data, no cross-site tracking.
           </p>
         </div>
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
-
-          {/* Intro video */}
-          <Section title="Watch the intro">
-            <div className="relative w-full rounded-sm overflow-hidden border border-border/50" style={{ paddingBottom: "56.25%" }}>
-              <iframe
-                className="absolute inset-0 w-full h-full"
-                src="https://www.youtube-nocookie.com/embed/nCLY7rHAjWE?rel=0&modestbranding=1&color=white"
-                title="Synapse introduction"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </Section>
 
           {/* The idea */}
           <Section title="The idea">

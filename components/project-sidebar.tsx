@@ -417,9 +417,9 @@ export function ProjectSidebar({
               <button
                 onClick={onImportProject}
                 className="flex items-center justify-between w-full h-8 px-2.5 rounded-sm bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground font-mono text-[9px] font-bold uppercase tracking-[0.1em] transition-all active:scale-[0.98] border border-white/5"
-                title="Import a .nodepad file"
+                title="Import a .synapse file"
               >
-                <span>Import .nodepad</span>
+                <span>Import .synapse</span>
                 <FolderInput className="h-3.5 w-3.5" />
               </button>
               <button

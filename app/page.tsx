@@ -222,7 +222,7 @@ export default function Page() {
     } catch { /* quota exceeded — skip silently */ }
   }, [projects, isLoaded])
 
-  // Hidden file input for .nodepad import — triggered from sidebar or ⌘K
+  // Hidden file input for .synapse import — triggered from sidebar or ⌘K
   const importInputRef = useRef<HTMLInputElement>(null)
 
   const handleImportFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -241,7 +241,7 @@ export default function Page() {
         if (err instanceof NodepadParseError) {
           alert(err.message)
         } else {
-          alert("Could not import file — make sure it's a valid .nodepad file.")
+          alert("Could not import file — make sure it's a valid .synapse file.")
         }
       }
     }
@@ -864,14 +864,14 @@ export default function Page() {
     } else if (cmd === "clear") clearBlocks()
     else if (cmd === "help") window.open("https://github.com/albingroen/react-cmdk", "_blank")
     
-    // .nodepad export / import
-    else if (cmd === "export-nodepad") {
+    // .synapse export / import
+    else if (cmd === "export-synapse") {
       setProjects(prev => {
         const proj = prev.find(p => p.id === activeProjectId)
         if (proj) downloadNodepadFile(proj)
         return prev
       })
-    } else if (cmd === "import-nodepad") {
+    } else if (cmd === "import-synapse") {
       importInputRef.current?.click()
     }
 
@@ -906,11 +906,11 @@ export default function Page() {
 
   return (
     <div className="flex h-dvh overflow-hidden bg-background">
-      {/* Hidden file input for .nodepad import */}
+      {/* Hidden file input for .synapse import */}
       <input
         ref={importInputRef}
         type="file"
-        accept=".nodepad,.json"
+        accept=".synapse,.json"
         className="hidden"
         onChange={handleImportFile}
       />

@@ -11,8 +11,8 @@ import { Command } from "cmdk"
 import { useModKey } from "@/lib/utils"
 
 const ACTION_ITEMS = [
-  { id: "export-nodepad", icon: FolderDown,  label: "Export",  sub: ".nodepad"  },
-  { id: "import-nodepad", icon: FolderInput, label: "Import",  sub: ".nodepad"  },
+  { id: "export-synapse", icon: FolderDown,  label: "Export",  sub: ".synapse"  },
+  { id: "import-synapse", icon: FolderInput, label: "Import",  sub: ".synapse"  },
   { id: "export-md",      icon: Download,    label: "Export",  sub: "markdown"  },
   { id: "copy-md",        icon: Clipboard,   label: "Copy",    sub: "markdown"  },
   { id: "clear",          icon: Trash2,      label: "Clear",   sub: "canvas"    },
