@@ -93,7 +93,7 @@ export function StatusBar({
             <span className="inline-block h-2 w-2 rounded-sm bg-primary/30" />
           </div>
           <h1 className="font-mono text-xs font-bold text-foreground tracking-tight select-none">
-            nodepad
+            Synapse
           </h1>
           {activeProjectName && (
             <div className="flex items-center gap-2 ml-1">
@@ -201,7 +201,7 @@ export function StatusBar({
                 onHelpTooltipDismiss?.()
               }}
               className="p-1.5 rounded-sm transition-all duration-200 hover:bg-secondary text-muted-foreground/40 hover:text-foreground"
-              title="About nodepad"
+              title="About Synapse"
             >
               <span className="font-mono text-[11px] font-black leading-none">?</span>
             </button>

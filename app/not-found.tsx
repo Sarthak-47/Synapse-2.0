@@ -58,7 +58,7 @@ export default function NotFound() {
             <span className="h-2.5 w-2.5 rounded-[3px] bg-[var(--type-quote)] opacity-30" />
           </div>
           <span className="font-mono text-xs font-semibold tracking-tight text-foreground/60">
-            nodepad
+            Synapse
           </span>
         </div>
 

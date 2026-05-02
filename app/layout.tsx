@@ -12,23 +12,23 @@ const vazirmatn = Vazirmatn({
 });
 
 export const metadata: Metadata = {
-  title: 'nodepad',
+  title: 'Synapse',
   description: 'A spatial research tool where AI augments your thinking — not replaces it.',
   icons: {
     icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
     apple: '/apple-icon.png',
   },
   openGraph: {
-    title: 'nodepad',
+    title: 'Synapse',
     description: 'A spatial research tool where AI augments your thinking — not replaces it.',
-    url: 'https://nodepad.space',
-    siteName: 'nodepad',
+    url: '[YOUR_DEPLOYED_URL]',
+    siteName: 'Synapse',
     locale: 'en_US',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'nodepad',
+    title: 'Synapse',
     description: 'A spatial research tool where AI augments your thinking — not replaces it.',
   },
 }
@@ -41,9 +41,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Umami analytics — nodepad.space only. Remove or replace with your
-            own data-website-id if self-hosting. Safe to delete entirely. */}
-        <script defer src="https://cloud.umami.is/script.js" data-website-id="334833bb-9911-4ddb-b3f2-6df25795cd0e" />
       </head>
       <body className={`font-sans antialiased ${vazirmatn.variable}`} suppressHydrationWarning>
         <MobileWall />

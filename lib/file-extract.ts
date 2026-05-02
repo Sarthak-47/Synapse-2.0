@@ -214,8 +214,8 @@ async function extractFromImage(file: File): Promise<string> {
     headers: {
       "Content-Type":  "application/json",
       "Authorization": `Bearer ${config.apiKey}`,
-      "HTTP-Referer":  "https://nodepad.space",
-      "X-Title":       "nodepad",
+      "HTTP-Referer":  "[YOUR_DEPLOYED_URL]",
+      "X-Title":       "Synapse",
     },
     body: JSON.stringify({
       // GPT-4o has reliable vision; falls back gracefully if user's model supports it

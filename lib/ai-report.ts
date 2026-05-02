@@ -121,8 +121,8 @@ export async function* generateReport(
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${config.apiKey}`,
-      "HTTP-Referer": "https://nodepad.space",
-      "X-Title": "nodepad",
+      "HTTP-Referer": "[YOUR_DEPLOYED_URL]",
+      "X-Title": "Synapse",
     },
     body: JSON.stringify({
       model: config.modelId,

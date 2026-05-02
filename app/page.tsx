@@ -90,7 +90,7 @@ export default function Page() {
   // ── Intro modal ──────────────────────────────────────────────────────────
   const handleIntroClose = useCallback(() => {
     setIsIntroOpen(false)
-    localStorage.setItem("nodepad-intro-seen", "true")
+    localStorage.setItem("synapse-intro-seen", "true")
     // Show the help tooltip for 6 seconds pointing to the ? button
     setShowHelpTooltip(true)
     if (helpTooltipTimer.current) clearTimeout(helpTooltipTimer.current)
@@ -140,16 +140,16 @@ export default function Page() {
 
   // 1. Persistence: Initial Load & Migration
   useEffect(() => {
-    const savedProjects = localStorage.getItem("nodepad-projects")
-    const savedActiveId = localStorage.getItem("nodepad-active-project")
+    const savedProjects = localStorage.getItem("synapse-projects")
+    const savedActiveId = localStorage.getItem("synapse-active-project")
     
-    const oldBlocks = localStorage.getItem("nodepad-blocks")
-    const oldCollapsed = localStorage.getItem("nodepad-collapsed")
+    const oldBlocks = localStorage.getItem("synapse-blocks")
+    const oldCollapsed = localStorage.getItem("synapse-collapsed")
 
     let initialProjects: Project[] = []
     let initialActiveId = ""
 
-    const backupProjects = localStorage.getItem("nodepad-backup")
+    const backupProjects = localStorage.getItem("synapse-backup")
 
     if (savedProjects) {
       try {
@@ -166,7 +166,7 @@ export default function Page() {
       try {
         initialProjects = JSON.parse(backupProjects)
         initialActiveId = initialProjects[0]?.id || ""
-        console.info("Restored from nodepad-backup")
+        console.info("Restored from synapse-backup")
       } catch (e) {
         console.error("Backup restore also failed", e)
       }
@@ -200,7 +200,7 @@ export default function Page() {
     setIsLoaded(true)
 
     // Show intro modal on first visit
-    if (!localStorage.getItem("nodepad-intro-seen")) {
+    if (!localStorage.getItem("synapse-intro-seen")) {
       setIsIntroOpen(true)
     }
 
@@ -209,8 +209,8 @@ export default function Page() {
   // 2. Persistence: Save on Change
   useEffect(() => {
     if (!isLoaded) return
-    localStorage.setItem("nodepad-projects", JSON.stringify(projects))
-    localStorage.setItem("nodepad-active-project", activeProjectId)
+    localStorage.setItem("synapse-projects", JSON.stringify(projects))
+    localStorage.setItem("synapse-active-project", activeProjectId)
   }, [projects, activeProjectId, isLoaded])
 
   // 3. Silent rolling backup — written on every change, separate key.
@@ -218,7 +218,7 @@ export default function Page() {
   useEffect(() => {
     if (!isLoaded || projects.length === 0) return
     try {
-      localStorage.setItem("nodepad-backup", JSON.stringify(projects))
+      localStorage.setItem("synapse-backup", JSON.stringify(projects))
     } catch { /* quota exceeded — skip silently */ }
   }, [projects, isLoaded])
 

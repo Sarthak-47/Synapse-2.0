@@ -56,7 +56,7 @@ export interface AISettings {
   webGrounding: boolean
 }
 
-const STORAGE_KEY = "nodepad-ai-settings"
+const STORAGE_KEY = "synapse-ai-settings"
 
 function loadSettings(): AISettings {
   if (typeof window === "undefined") {

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og"
 
 export const runtime = "edge"
-export const alt = "nodepad — spatial AI research tool"
+export const alt = "Synapse — spatial AI research tool"
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
@@ -29,7 +29,7 @@ export default function OGImage() {
             <div style={{ width: 28, height: 28, borderRadius: 5, background: "#3ecf6e", opacity: 0.3 }} />
           </div>
           <span style={{ fontSize: 28, fontWeight: 600, color: "#f0f0f0", letterSpacing: "-0.5px" }}>
-            nodepad
+            Synapse
           </span>
         </div>
 
@@ -51,7 +51,7 @@ export default function OGImage() {
 
         {/* Subline */}
         <div style={{ fontSize: 24, color: "#666", fontWeight: 400, letterSpacing: "-0.3px" }}>
-          nodepad.space
+          [YOUR_DEPLOYED_URL]
         </div>
       </div>
     ),

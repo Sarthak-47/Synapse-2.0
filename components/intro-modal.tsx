@@ -55,7 +55,7 @@ export function IntroModal({ open, onClose }: IntroModalProps) {
                     <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary/60" />
                     <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary/30" />
                   </div>
-                  <span className="font-mono text-sm font-black text-foreground tracking-tight">nodepad</span>
+                  <span className="font-mono text-sm font-black text-foreground tracking-tight">Synapse</span>
                 </div>
                 <p className="text-xs text-muted-foreground/60 font-mono uppercase tracking-widest">
                   A quick introduction
@@ -70,15 +70,10 @@ export function IntroModal({ open, onClose }: IntroModalProps) {
               </button>
             </div>
 
-            {/* Video embed — 16:9 */}
-            <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-              <iframe
-                className="absolute inset-0 w-full h-full"
-                src="https://www.youtube-nocookie.com/embed/nCLY7rHAjWE?autoplay=1&rel=0&modestbranding=1&color=white"
-                title="nodepad introduction"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+            {/* Welcome message */}
+            <div className="px-6 py-6 text-sm text-muted-foreground/70 font-mono leading-relaxed">
+              <p>Welcome to <span className="text-foreground font-black">Synapse</span> — your AI-powered knowledge workspace.</p>
+              <p className="mt-2">Import files, build a knowledge graph, chat with your notes, and more.</p>
             </div>
 
             {/* Footer */}

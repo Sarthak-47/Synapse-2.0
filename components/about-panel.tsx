@@ -102,7 +102,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
         side="right"
         className="w-full sm:max-w-2xl flex flex-col gap-0 p-0 bg-card border-l border-border z-[200] overflow-hidden"
       >
-        <SheetTitle className="sr-only">About nodepad</SheetTitle>
+        <SheetTitle className="sr-only">About Synapse</SheetTitle>
 
         {/* Header */}
         <div className="flex-shrink-0 px-8 pt-8 pb-6 border-b border-border">
@@ -112,7 +112,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
               <span className="inline-block h-3 w-3 rounded-sm bg-primary/60" />
               <span className="inline-block h-3 w-3 rounded-sm bg-primary/30" />
             </div>
-            <h1 className="font-mono text-xl font-black text-foreground tracking-tight">nodepad</h1>
+            <h1 className="font-mono text-xl font-black text-foreground tracking-tight">Synapse</h1>
           </div>
           <p className="text-base text-muted-foreground leading-relaxed max-w-lg">
             A spatial research tool that reads what you write and enriches it with AI — no prompting, no chat. Just capture your thinking and let the structure emerge.
@@ -133,7 +133,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
               </a>
             </span>
             <a
-              href="https://github.com/mskayyali/nodepad"
+              href="[YOUR_DEPLOYED_URL]"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/50 hover:text-foreground border border-white/10 hover:border-white/25 px-2 py-0.5 rounded-sm transition-colors"
@@ -156,7 +156,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
               <iframe
                 className="absolute inset-0 w-full h-full"
                 src="https://www.youtube-nocookie.com/embed/nCLY7rHAjWE?rel=0&modestbranding=1&color=white"
-                title="nodepad introduction"
+                title="Synapse introduction"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
@@ -166,7 +166,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
           {/* The idea */}
           <Section title="The idea">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Most AI tools ask you to prompt them. nodepad flips this — you write freely, and the AI quietly reads everything you've captured, classifies it, annotates it, finds contradictions, surfaces connections, and synthesises emerging insights. Your canvas evolves as you think.
+              Most AI tools ask you to prompt them. Synapse flips this — you write freely, and the AI quietly reads everything you've captured, classifies it, annotates it, finds contradictions, surfaces connections, and synthesises emerging insights. Your canvas evolves as you think.
             </p>
             <p className="text-sm text-muted-foreground leading-relaxed">
               It's designed for researchers, writers, and deep thinkers who want a thinking partner — not a chatbot. The goal is to reduce the friction between a raw thought and a structured insight.
@@ -180,7 +180,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
                 Open the sidebar (menu button top-left) → Settings → paste your OpenRouter API key. Free to sign up at openrouter.ai. Without a key the app works but AI enrichment is disabled.
               </Step>
               <Step n={2} title="Capture anything">
-                Type a thought, paste a quote, drop a URL, or write a question into the input bar at the bottom and press Enter. nodepad classifies it automatically.
+                Type a thought, paste a quote, drop a URL, or write a question into the input bar at the bottom and press Enter. Synapse classifies it automatically.
               </Step>
               <Step n={3} title="Watch it enrich">
                 Each node is sent to the AI in context with everything else on your canvas. It comes back with a type, category, annotation, and connections to related nodes.
@@ -189,7 +189,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
                 Start your note with a shorthand like <code className="px-1 rounded bg-secondary font-mono text-xs text-primary">#claim</code>, <code className="px-1 rounded bg-secondary font-mono text-xs text-primary">#question</code>, or <code className="px-1 rounded bg-secondary font-mono text-xs text-primary">#idea</code> to override AI classification.
               </Step>
               <Step n={5} title="Watch for synthesis">
-                After a few nodes, nodepad auto-generates a synthesis note — an emergent thesis drawn from everything on the canvas. Find it in the Synthesis panel (top-right sparkle icon).
+                After a few nodes, Synapse auto-generates a synthesis note — an emergent thesis drawn from everything on the canvas. Find it in the Synthesis panel (top-right sparkle icon).
               </Step>
             </div>
           </Section>
@@ -197,7 +197,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
           {/* Content types */}
           <Section title="Content types">
             <p className="text-sm text-muted-foreground mb-3">
-              nodepad recognises 14 types of thinking. Each node is classified into one automatically, and given a colour to match.
+              Synapse recognises 14 types of thinking. Each node is classified into one automatically, and given a colour to match.
             </p>
             <div className="grid grid-cols-2 gap-2">
               {CONTENT_TYPE_HIGHLIGHTS.map((type) => {
@@ -255,7 +255,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
                 { icon: Zap, title: "Contextual annotation", desc: "The AI reads your whole canvas and writes a 2–4 sentence annotation for each node that explains it in the context of everything else." },
                 { icon: Search, title: "Connection mapping", desc: "Hover the dot indicator on any tile header to dim unrelated nodes and reveal which nodes are semantically connected. In Graph view, the same connections drive the layout — connected nodes pull toward each other." },
                 { icon: Globe, title: "Web grounding", desc: "Enable web grounding in settings to have claims, questions, and references verified against live sources. Citations appear inline." },
-                { icon: Sparkles, title: "Synthesis", desc: "After ≥3 nodes, nodepad quietly generates an emergent thesis — a 15–25 word synthesis of what you're actually thinking about. Solidify it to keep it, or dismiss." },
+                { icon: Sparkles, title: "Synthesis", desc: "After ≥3 nodes, Synapse quietly generates an emergent thesis — a 15–25 word synthesis of what you're actually thinking about. Solidify it to keep it, or dismiss." },
               ].map(({ icon: Icon, title, desc }) => (
                 <div key={title} className="flex gap-3">
                   <Icon className="h-4 w-4 flex-shrink-0 text-primary/70 mt-0.5" />
@@ -274,8 +274,8 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
               <div className="flex gap-3">
                 <FolderDown className="h-4 w-4 flex-shrink-0 text-primary/70 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-foreground mb-0.5">Export .nodepad</p>
-                  <p className="text-sm text-muted-foreground">Save your full research space as a <code className="px-1 rounded bg-secondary font-mono text-xs">.nodepad</code> file. Import it on any device to pick up where you left off.</p>
+                  <p className="text-sm font-semibold text-foreground mb-0.5">Export .synapse</p>
+                  <p className="text-sm text-muted-foreground">Save your full research space as a <code className="px-1 rounded bg-secondary font-mono text-xs">.synapse</code> file. Import it on any device to pick up where you left off.</p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -311,7 +311,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
           <Section title="Tips">
             <ul className="space-y-2">
               {[
-                "Write in fragments — nodepad handles the structure. You don't need to write in full sentences.",
+                "Write in fragments — Synapse handles the structure. You don't need to write in full sentences.",
                 "Mix types freely. A canvas with claims, questions, and quotes is richer than one with only one type.",
                 "Switch to Graph view (via ⌘K → Graph) to understand which nodes are central to your thinking and which are peripheral.",
                 "The canvas index (⌘K → Index) groups nodes by category — hovering a title in the index highlights the matching node in any view.",
@@ -333,7 +333,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
               <span className="inline-block h-1.5 w-1.5 rounded-sm bg-primary" />
               <span className="inline-block h-1.5 w-1.5 rounded-sm bg-primary/60" />
               <span className="inline-block h-1.5 w-1.5 rounded-sm bg-primary/30" />
-              <span className="font-mono text-[10px] font-bold text-muted-foreground/40 ml-1">nodepad</span>
+              <span className="font-mono text-[10px] font-bold text-muted-foreground/40 ml-1">Synapse</span>
             </div>
           </div>
 
