@@ -2,6 +2,7 @@
 
 import { detectContentType } from "@/lib/detect-content-type"
 import { loadAIConfig, type AIConfig } from "@/lib/ai-settings"
+import { getAIProviderParams } from "@/lib/ai-client"
 import type { ContentType } from "@/lib/content-types"
 
 // ── Language detection ────────────────────────────────────────────────────────
@@ -212,14 +213,11 @@ You have live web access. For this note type, include 1–2 real source citation
   const langDirective = `[RESPOND IN: ${language}]\n`
   const userMessage = `${langDirective}<note_to_enrich>${safeText}</note_to_enrich>${urlContext}${categoryContext}${forcedTypeContext}${globalContext}`
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const params = getAIProviderParams(config)
+
+  const response = await fetch(params.url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${config.apiKey}`,
-      "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
-      "X-Title": "Synapse",
-    },
+    headers: params.headers,
     body: JSON.stringify({
       model,
       messages: [
@@ -234,12 +232,12 @@ You have live web access. For this note type, include 1–2 real source citation
 
   if (!response.ok) {
     const err = await response.text()
-    throw new Error(`OpenRouter enrich error ${response.status}: ${err}`)
+    throw new Error(`AI enrich error ${response.status}: ${err}`)
   }
 
   const data = await response.json()
   const content = data.choices?.[0]?.message?.content
-  if (!content) throw new Error("No content in OpenRouter response")
+  if (!content) throw new Error("No content in AI response")
 
   const result: EnrichResult = JSON.parse(content)
   if (result.confidence != null) {

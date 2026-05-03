@@ -18,6 +18,7 @@
  */
 
 import { loadAIConfig } from "@/lib/ai-settings"
+import { getAIProviderParams } from "@/lib/ai-client"
 import type { TextBlock } from "@/components/tile-card"
 import { CONTENT_TYPE_CONFIG } from "@/lib/content-types"
 
@@ -116,14 +117,11 @@ export async function* generateReport(
   const context   = buildReportContext(projectName, blocks)
   const userMsg   = `Generate a research report for the following canvas.\n\n${context}`
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const params = getAIProviderParams(config)
+
+  const response = await fetch(params.url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${config.apiKey}`,
-      "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
-      "X-Title": "Synapse",
-    },
+    headers: params.headers,
     body: JSON.stringify({
       model: config.modelId,
       messages: [
@@ -139,7 +137,7 @@ export async function* generateReport(
 
   if (!response.ok) {
     const err = await response.text()
-    throw new Error(`OpenRouter error ${response.status}: ${err}`)
+    throw new Error(`AI error ${response.status}: ${err}`)
   }
 
   // Parse the SSE stream line by line — same logic as ai-chat.ts

@@ -105,7 +105,9 @@ export function ProjectSidebar({
     setShowSettings(false)
   }
 
-  const selectedModel = AI_MODELS.find(m => m.id === draft.modelId) || AI_MODELS[0]
+  const currentModelId = draft.provider === "google" ? draft.googleModelId : draft.openRouterModelId
+  const selectedModel = AI_MODELS.find(m => m.id === currentModelId) || AI_MODELS.find(m => m.provider === draft.provider) || AI_MODELS[0]
+
 
   return (
     <div
@@ -268,18 +270,46 @@ export function ProjectSidebar({
                 transition={{ duration: 0.15 }}
                 className="absolute inset-0 overflow-y-auto px-3 py-4 flex flex-col gap-5 custom-scrollbar"
               >
+                {/* Provider Toggle */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                    AI Provider
+                  </label>
+                  <div className="flex rounded-md border border-white/10 p-0.5 bg-black/20">
+                    <button
+                      onClick={() => setDraft(d => ({ ...d, provider: "google" }))}
+                      className={`flex-1 rounded-sm py-1.5 font-mono text-[10px] font-bold transition-all ${
+                        draft.provider === "google" ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                      }`}
+                    >
+                      Google
+                    </button>
+                    <button
+                      onClick={() => setDraft(d => ({ ...d, provider: "openrouter" }))}
+                      className={`flex-1 rounded-sm py-1.5 font-mono text-[10px] font-bold transition-all ${
+                        draft.provider === "openrouter" ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                      }`}
+                    >
+                      OpenRouter
+                    </button>
+                  </div>
+                </div>
+
                 {/* API Key */}
                 <div className="flex flex-col gap-2">
                   <label className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                    OpenRouter API Key
+                    {draft.provider === "google" ? "Google API Key" : "OpenRouter API Key"}
                   </label>
                   <div className="flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2 focus-within:border-primary/50 transition-colors">
                     <Key className="h-3 w-3 shrink-0 text-muted-foreground" />
                     <input
                       type={showKey ? "text" : "password"}
-                      value={draft.apiKey}
-                      onChange={e => setDraft(d => ({ ...d, apiKey: e.target.value }))}
-                      placeholder="sk-or-v1-..."
+                      value={draft.provider === "google" ? draft.googleApiKey : draft.openRouterApiKey}
+                      onChange={e => setDraft(d => ({ 
+                        ...d, 
+                        ...(d.provider === "google" ? { googleApiKey: e.target.value } : { openRouterApiKey: e.target.value })
+                      }))}
+                      placeholder={draft.provider === "google" ? "AIzaSy..." : "sk-or-v1-..."}
                       className="flex-1 bg-transparent font-mono text-[11px] text-foreground outline-none placeholder:text-muted-foreground/40"
                       autoComplete="off"
                       spellCheck={false}
@@ -290,10 +320,17 @@ export function ProjectSidebar({
                   </div>
                   <p className="font-mono text-[9px] text-muted-foreground leading-relaxed">
                     Stored locally. Never sent to a server.{" "}
-                    <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener noreferrer"
-                      className="text-primary underline hover:brightness-125 transition-all">
-                      Get a key →
-                    </a>
+                    {draft.provider === "google" ? (
+                      <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
+                        className="text-primary underline hover:brightness-125 transition-all">
+                        Get a Google key →
+                      </a>
+                    ) : (
+                      <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener noreferrer"
+                        className="text-primary underline hover:brightness-125 transition-all">
+                        Get an OpenRouter key →
+                      </a>
+                    )}
                   </p>
                 </div>
 
@@ -322,19 +359,23 @@ export function ProjectSidebar({
                           transition={{ duration: 0.1 }}
                           className="absolute top-full left-0 right-0 z-20 mt-1 overflow-hidden rounded-md border border-white/10 bg-[#0d0d10] shadow-xl"
                         >
-                          {AI_MODELS.map(model => (
+                          {AI_MODELS.filter(m => m.provider === draft.provider).map(model => (
                             <button
                               key={model.id}
                               onClick={() => {
-                                setDraft(d => ({ ...d, modelId: model.id, webGrounding: model.supportsGrounding ? d.webGrounding : false }))
+                                setDraft(d => ({ 
+                                  ...d, 
+                                  ...(d.provider === "google" ? { googleModelId: model.id } : { openRouterModelId: model.id }),
+                                  webGrounding: model.supportsGrounding ? d.webGrounding : false 
+                                }))
                                 setModelOpen(false)
                               }}
                               className="flex w-full items-center gap-2.5 px-2.5 py-2 text-left hover:bg-white/5 transition-colors"
                             >
                               <div className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border ${
-                                draft.modelId === model.id ? "border-primary bg-primary/20" : "border-white/10"
+                                currentModelId === model.id ? "border-primary bg-primary/20" : "border-white/10"
                               }`}>
-                                {draft.modelId === model.id && <Check className="h-2.5 w-2.5 text-primary" />}
+                                {currentModelId === model.id && <Check className="h-2.5 w-2.5 text-primary" />}
                               </div>
                               <div>
                                 <div className="font-mono text-[10px] font-bold text-foreground">{model.label}</div>
@@ -375,12 +416,12 @@ export function ProjectSidebar({
 
                 {/* API Status */}
                 <div className={`flex items-center gap-2 rounded-md px-2.5 py-2 font-mono text-[9px] ${
-                  draft.apiKey
+                  (draft.provider === "google" ? draft.googleApiKey : draft.openRouterApiKey)
                     ? "bg-primary/10 border border-primary/20 text-primary"
                     : "bg-white/5 border border-white/5 text-muted-foreground"
                 }`}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${draft.apiKey ? "bg-primary animate-pulse" : "bg-white/30"}`} />
-                  {draft.apiKey ? "API key configured" : "No API key — AI disabled"}
+                  <span className={`h-1.5 w-1.5 rounded-full ${(draft.provider === "google" ? draft.googleApiKey : draft.openRouterApiKey) ? "bg-primary animate-pulse" : "bg-white/30"}`} />
+                  {(draft.provider === "google" ? draft.googleApiKey : draft.openRouterApiKey) ? "API key configured" : "No API key — AI disabled"}
                 </div>
               </motion.div>
             )}

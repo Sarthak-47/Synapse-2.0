@@ -16,6 +16,7 @@
  */
 
 import { loadAIConfig } from "@/lib/ai-settings"
+import { getAIProviderParams } from "@/lib/ai-client"
 import type { TextBlock } from "@/components/tile-card"
 import { CONTENT_TYPE_CONFIG } from "@/lib/content-types"
 
@@ -107,14 +108,11 @@ export async function* askCanvas(
   // stays clean and cacheable across multiple turns in the same session.
   const userMessage = `## Canvas notes\n\n${context}\n\n## Question\n\n${question}`
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const params = getAIProviderParams(config)
+
+  const response = await fetch(params.url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${config.apiKey}`,
-      "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
-      "X-Title": "Synapse",
-    },
+    headers: params.headers,
     body: JSON.stringify({
       model: config.modelId,
       messages: [
@@ -130,7 +128,7 @@ export async function* askCanvas(
 
   if (!response.ok) {
     const err = await response.text()
-    throw new Error(`OpenRouter error ${response.status}: ${err}`)
+    throw new Error(`AI API error ${response.status}: ${err}`)
   }
 
   // Read the SSE stream line by line. Each line is either:

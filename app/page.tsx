@@ -62,6 +62,7 @@ export default function Page() {
   const [showHelpTooltip, setShowHelpTooltip] = useState(false)
   const helpTooltipTimer = useRef<NodeJS.Timeout | null>(null)
   const { settings, updateSettings, resolvedModelId, currentModel } = useAISettings()
+  const hasApiKey = settings.provider === "google" ? !!settings.googleApiKey : !!settings.openRouterApiKey
   const debounceTimers = useRef<Record<string, Record<string, NodeJS.Timeout>>>({})
 
   // ── Undo history ring (max 20 block snapshots per project) ───────────────
@@ -943,7 +944,7 @@ export default function Page() {
           onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
           onIndexToggle={() => setIsIndexOpen(!isIndexOpen)}
           onGhostPanelToggle={() => setIsGhostPanelOpen(prev => !prev)}
-          modelLabel={settings.apiKey ? currentModel.shortLabel : undefined}
+          modelLabel={hasApiKey ? currentModel.shortLabel : undefined}
           showHelpTooltip={showHelpTooltip}
           onHelpTooltipDismiss={() => {
             setShowHelpTooltip(false)
@@ -951,9 +952,9 @@ export default function Page() {
           }}
         />
 
-        {!settings.apiKey && (
+        {!hasApiKey && (
           <div className="flex items-center justify-center gap-3 px-4 py-2 bg-amber-950/80 border-b border-amber-800/60 text-amber-200 text-xs shrink-0">
-            <span className="opacity-80">⚡ AI enrichment is inactive — add an OpenRouter API key to classify and annotate your notes.</span>
+            <span className="opacity-80">⚡ AI enrichment is inactive — add an API key in settings to classify and annotate your notes.</span>
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => { setIsSidebarOpen(true); setJumpToSettings(true) }}

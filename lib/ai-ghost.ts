@@ -25,6 +25,7 @@
  */
 
 import { loadAIConfig } from "@/lib/ai-settings"
+import { getAIProviderParams } from "@/lib/ai-client"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -97,14 +98,11 @@ ${context.map(c =>
 Return ONLY valid JSON:
 {"text": "...", "category": "..."}`
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const params = getAIProviderParams(config)
+
+  const response = await fetch(params.url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${config.apiKey}`,
-      "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
-      "X-Title": "Synapse",
-    },
+    headers: params.headers,
     body: JSON.stringify({
       model,
       messages: [{ role: "user", content: prompt }],
@@ -116,12 +114,12 @@ Return ONLY valid JSON:
 
   if (!response.ok) {
     const err = await response.text()
-    throw new Error(`OpenRouter ghost error ${response.status}: ${err}`)
+    throw new Error(`AI ghost error ${response.status}: ${err}`)
   }
 
   const data = await response.json()
   const rawContent = data.choices?.[0]?.message?.content
-  if (!rawContent) throw new Error("No content in OpenRouter response")
+  if (!rawContent) throw new Error("No content in AI response")
 
   // Primary parse: the json_object format should always produce valid JSON.
   // Fallback regex: if the model includes surrounding prose despite the format

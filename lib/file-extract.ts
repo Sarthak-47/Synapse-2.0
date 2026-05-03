@@ -25,6 +25,7 @@
  */
 
 import { loadAIConfig } from "@/lib/ai-settings"
+import { getAIProviderParams } from "@/lib/ai-client"
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -209,17 +210,14 @@ async function extractFromImage(file: File): Promise<string> {
   const base64      = arrayBufferToBase64(arrayBuffer)
   const mimeType    = file.type || "image/jpeg"
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const params = getAIProviderParams(config)
+
+  const response = await fetch(params.url, {
     method: "POST",
-    headers: {
-      "Content-Type":  "application/json",
-      "Authorization": `Bearer ${config.apiKey}`,
-      "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
-      "X-Title":       "Synapse",
-    },
+    headers: params.headers,
     body: JSON.stringify({
-      // GPT-4o has reliable vision; falls back gracefully if user's model supports it
-      model: "openai/gpt-4o",
+      // GPT-4o has reliable vision; if Google API is selected, we must use the active Gemini model
+      model: config.provider === "google" ? config.modelId : "openai/gpt-4o",
       messages: [{
         role: "user",
         content: [
@@ -237,8 +235,6 @@ async function extractFromImage(file: File): Promise<string> {
           },
         ],
       }],
-      max_tokens: 2000,
-      temperature: 0,   // deterministic transcription
       max_tokens: 1000,
     }),
   })
