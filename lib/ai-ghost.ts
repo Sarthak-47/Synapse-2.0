@@ -102,7 +102,7 @@ Return ONLY valid JSON:
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${config.apiKey}`,
-      "HTTP-Referer": "[YOUR_DEPLOYED_URL]",
+      "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
       "X-Title": "Synapse",
     },
     body: JSON.stringify({
@@ -110,6 +110,7 @@ Return ONLY valid JSON:
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" }, // guarantees a JSON response body
       temperature: 0.7,  // higher than other calls — creative cross-category insight
+      max_tokens: 1000,
     }),
   })
 

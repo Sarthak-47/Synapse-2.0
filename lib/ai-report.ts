@@ -121,7 +121,7 @@ export async function* generateReport(
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${config.apiKey}`,
-      "HTTP-Referer": "[YOUR_DEPLOYED_URL]",
+      "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
       "X-Title": "Synapse",
     },
     body: JSON.stringify({
@@ -132,7 +132,7 @@ export async function* generateReport(
       ],
       stream: true,        // server-sent events for live streaming to the UI
       temperature: 0.4,    // slightly creative for prose, still grounded
-      max_tokens: 1800,    // enough for a full multi-section report
+      max_tokens: 3000,
     }),
     signal,
   })

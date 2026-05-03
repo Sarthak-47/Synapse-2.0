@@ -112,7 +112,7 @@ export async function* askCanvas(
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${config.apiKey}`,
-      "HTTP-Referer": "[YOUR_DEPLOYED_URL]",
+      "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
       "X-Title": "Synapse",
     },
     body: JSON.stringify({
@@ -123,7 +123,7 @@ export async function* askCanvas(
       ],
       stream: true,       // enables server-sent events (SSE) response
       temperature: 0.3,   // low temperature for factual, grounded answers
-      max_tokens: 512,    // concise answers — long responses suggest hallucination
+      max_tokens: 2000,
     }),
     signal,
   })

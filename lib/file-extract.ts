@@ -214,7 +214,7 @@ async function extractFromImage(file: File): Promise<string> {
     headers: {
       "Content-Type":  "application/json",
       "Authorization": `Bearer ${config.apiKey}`,
-      "HTTP-Referer":  "[YOUR_DEPLOYED_URL]",
+      "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
       "X-Title":       "Synapse",
     },
     body: JSON.stringify({
@@ -239,6 +239,7 @@ async function extractFromImage(file: File): Promise<string> {
       }],
       max_tokens: 2000,
       temperature: 0,   // deterministic transcription
+      max_tokens: 1000,
     }),
   })
 

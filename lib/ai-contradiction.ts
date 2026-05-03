@@ -159,7 +159,7 @@ export async function detectContradictions(blocks: TextBlock[]): Promise<Contrad
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${config.apiKey}`,
-      "HTTP-Referer": "[YOUR_DEPLOYED_URL]",
+      "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
       "X-Title": "Synapse",
     },
     body: JSON.stringify({
@@ -171,6 +171,7 @@ export async function detectContradictions(blocks: TextBlock[]): Promise<Contrad
       // Strict JSON schema ensures a parseable response without a fallback regex
       response_format: { type: "json_schema", json_schema: SCHEMA },
       temperature: 0.1,   // very low temperature for deterministic fact-checking
+      max_tokens: 1500,
     }),
   })
 

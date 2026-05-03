@@ -217,7 +217,7 @@ You have live web access. For this note type, include 1–2 real source citation
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${config.apiKey}`,
-      "HTTP-Referer": "[YOUR_DEPLOYED_URL]",
+      "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
       "X-Title": "Synapse",
     },
     body: JSON.stringify({
@@ -228,6 +228,7 @@ You have live web access. For this note type, include 1–2 real source citation
       ],
       response_format: { type: "json_schema", json_schema: JSON_SCHEMA },
       temperature: 0.1,
+      max_tokens: 1500,
     }),
   })
 
