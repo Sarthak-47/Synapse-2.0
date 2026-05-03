@@ -641,7 +641,7 @@ export const TileCard = memo(function TileCard({
                     className="group/source flex items-center justify-between rounded-sm border border-border/50 bg-secondary/30 px-2 py-1.5 transition-colors hover:bg-secondary"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="flex flex-col truncate pr-2">
+                    <div className="flex flex-col min-w-0 flex-1 pr-2">
                       <span className="truncate text-[11px] text-foreground/90 group-hover/source:text-foreground">
                         {source.title}
                       </span>
