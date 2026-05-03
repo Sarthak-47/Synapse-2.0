@@ -61,7 +61,7 @@ export default function Page() {
   const [isIntroOpen, setIsIntroOpen] = useState(false)
   const [showHelpTooltip, setShowHelpTooltip] = useState(false)
   const helpTooltipTimer = useRef<NodeJS.Timeout | null>(null)
-  const { settings, updateSettings, resolvedModelId, currentModel } = useAISettings()
+  const { settings, updateSettings, currentModel } = useAISettings()
   const hasApiKey = settings.provider === "google" ? !!settings.googleApiKey : !!settings.openRouterApiKey
   const debounceTimers = useRef<Record<string, Record<string, NodeJS.Timeout>>>({})
 

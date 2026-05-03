@@ -161,7 +161,8 @@ export async function enrichBlockClient(
   const shouldGround = config.supportsGrounding && TRUTH_DEPENDENT_TYPES.has(effectiveType)
 
   let model = config.modelId
-  if (shouldGround && !model.endsWith(":online")) {
+  // Only OpenRouter uses the :online model suffix for web grounding
+  if (shouldGround && config.provider === "openrouter" && !model.endsWith(":online")) {
     model = `${model}:online`
   }
 

@@ -66,7 +66,7 @@ export const AI_MODELS: AIModel[] = [
   },
 ]
 
-export const DEFAULT_GOOGLE_MODEL_ID = "gemini-2.5-pro"
+export const DEFAULT_GOOGLE_MODEL_ID = "gemini-2.5-flash"
 export const DEFAULT_OPENROUTER_MODEL_ID = "anthropic/claude-sonnet-4-5"
 
 export interface AISettings {
@@ -118,6 +118,7 @@ export interface AIConfig {
   apiKey: string
   modelId: string
   supportsGrounding: boolean
+  webGrounding: boolean
 }
 
 /** Read AI settings fresh from localStorage and return the resolved config.
@@ -129,11 +130,15 @@ export function loadAIConfig(): AIConfig | null {
   if (s.provider === "google") {
     if (!s.googleApiKey) return null
     const model = AI_MODELS.find(m => m.id === s.googleModelId && m.provider === "google") || AI_MODELS.find(m => m.id === DEFAULT_GOOGLE_MODEL_ID)!
-    return { provider: "google", apiKey: s.googleApiKey, modelId: model.id, supportsGrounding: model.supportsGrounding }
+    return { provider: "google", apiKey: s.googleApiKey, modelId: model.id, supportsGrounding: model.supportsGrounding, webGrounding: s.webGrounding }
   } else {
     if (!s.openRouterApiKey) return null
     const model = AI_MODELS.find(m => m.id === s.openRouterModelId && m.provider === "openrouter") || AI_MODELS.find(m => m.id === DEFAULT_OPENROUTER_MODEL_ID)!
-    return { provider: "openrouter", apiKey: s.openRouterApiKey, modelId: model.id, supportsGrounding: model.supportsGrounding }
+    
+    // Only OpenRouter uses the :online suffix for web grounding
+    const finalModelId = (s.webGrounding && model.supportsGrounding) ? `${model.id}:online` : model.id
+    
+    return { provider: "openrouter", apiKey: s.openRouterApiKey, modelId: finalModelId, supportsGrounding: model.supportsGrounding, webGrounding: s.webGrounding }
   }
 }
 
@@ -156,16 +161,7 @@ export function useAISettings() {
   const currentModelId = settings.provider === "google" ? settings.googleModelId : settings.openRouterModelId
   const defaultModelId = settings.provider === "google" ? DEFAULT_GOOGLE_MODEL_ID : DEFAULT_OPENROUTER_MODEL_ID
 
-  const resolvedModelId = (() => {
-    const model = AI_MODELS.find(m => m.id === currentModelId) || AI_MODELS.find(m => m.id === defaultModelId)!
-    // Only OpenRouter :online grounding needs this string append logic
-    if (settings.provider === "openrouter" && settings.webGrounding && model.supportsGrounding) {
-      return `${model.id}:online`
-    }
-    return model.id
-  })()
-
   const currentModel = AI_MODELS.find(m => m.id === currentModelId) || AI_MODELS.find(m => m.id === defaultModelId)!
 
-  return { settings, updateSettings, resolvedModelId, currentModel }
+  return { settings, updateSettings, currentModel }
 }
