@@ -48,7 +48,7 @@ export const AI_MODELS: AIModel[] = [
   },
 ]
 
-export const DEFAULT_MODEL_ID = "openai/gpt-4o"
+export const DEFAULT_MODEL_ID = "google/gemini-2.5-pro-preview-03-25"
 
 export interface AISettings {
   apiKey: string
