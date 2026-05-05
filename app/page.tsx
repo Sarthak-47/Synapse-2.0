@@ -62,7 +62,7 @@ export default function Page() {
   const [showHelpTooltip, setShowHelpTooltip] = useState(false)
   const helpTooltipTimer = useRef<NodeJS.Timeout | null>(null)
   const { settings, updateSettings, currentModel } = useAISettings()
-  const hasApiKey = settings.provider === "google" ? !!settings.googleApiKey : !!settings.openRouterApiKey
+  const hasApiKey = settings.provider === "google" ? !!settings.googleApiKey : settings.provider === "groq" ? !!settings.groqApiKey : !!settings.openRouterApiKey
   const debounceTimers = useRef<Record<string, Record<string, NodeJS.Timeout>>>({})
 
   // ── Undo history ring (max 20 block snapshots per project) ───────────────

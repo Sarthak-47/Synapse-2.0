@@ -105,7 +105,7 @@ export function ProjectSidebar({
     setShowSettings(false)
   }
 
-  const currentModelId = draft.provider === "google" ? draft.googleModelId : draft.openRouterModelId
+  const currentModelId = draft.provider === "google" ? draft.googleModelId : draft.provider === "groq" ? draft.groqModelId : draft.openRouterModelId
   const selectedModel = AI_MODELS.find(m => m.id === currentModelId) || AI_MODELS.find(m => m.provider === draft.provider) || AI_MODELS[0]
 
 
@@ -285,6 +285,14 @@ export function ProjectSidebar({
                       Google
                     </button>
                     <button
+                      onClick={() => setDraft(d => ({ ...d, provider: "groq" }))}
+                      className={`flex-1 rounded-sm py-1.5 font-mono text-[10px] font-bold transition-all ${
+                        draft.provider === "groq" ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                      }`}
+                    >
+                      Groq
+                    </button>
+                    <button
                       onClick={() => setDraft(d => ({ ...d, provider: "openrouter" }))}
                       className={`flex-1 rounded-sm py-1.5 font-mono text-[10px] font-bold transition-all ${
                         draft.provider === "openrouter" ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -298,18 +306,18 @@ export function ProjectSidebar({
                 {/* API Key */}
                 <div className="flex flex-col gap-2">
                   <label className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                    {draft.provider === "google" ? "Google API Key" : "OpenRouter API Key"}
+                    {draft.provider === "google" ? "Google API Key" : draft.provider === "groq" ? "Groq API Key" : "OpenRouter API Key"}
                   </label>
                   <div className="flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2 focus-within:border-primary/50 transition-colors">
                     <Key className="h-3 w-3 shrink-0 text-muted-foreground" />
                     <input
                       type={showKey ? "text" : "password"}
-                      value={draft.provider === "google" ? draft.googleApiKey : draft.openRouterApiKey}
+                      value={draft.provider === "google" ? draft.googleApiKey : draft.provider === "groq" ? draft.groqApiKey : draft.openRouterApiKey}
                       onChange={e => setDraft(d => ({ 
                         ...d, 
-                        ...(d.provider === "google" ? { googleApiKey: e.target.value } : { openRouterApiKey: e.target.value })
+                        ...(d.provider === "google" ? { googleApiKey: e.target.value } : d.provider === "groq" ? { groqApiKey: e.target.value } : { openRouterApiKey: e.target.value })
                       }))}
-                      placeholder={draft.provider === "google" ? "AIzaSy..." : "sk-or-v1-..."}
+                      placeholder={draft.provider === "google" ? "AIzaSy..." : draft.provider === "groq" ? "gsk_..." : "sk-or-v1-..."}
                       className="flex-1 bg-transparent font-mono text-[11px] text-foreground outline-none placeholder:text-muted-foreground/40"
                       autoComplete="off"
                       spellCheck={false}
@@ -324,6 +332,11 @@ export function ProjectSidebar({
                       <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
                         className="text-primary underline hover:brightness-125 transition-all">
                         Get a Google key →
+                      </a>
+                    ) : draft.provider === "groq" ? (
+                      <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer"
+                        className="text-primary underline hover:brightness-125 transition-all">
+                        Get a Groq key →
                       </a>
                     ) : (
                       <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener noreferrer"
@@ -365,7 +378,7 @@ export function ProjectSidebar({
                               onClick={() => {
                                 setDraft(d => ({ 
                                   ...d, 
-                                  ...(d.provider === "google" ? { googleModelId: model.id } : { openRouterModelId: model.id }),
+                                  ...(d.provider === "google" ? { googleModelId: model.id } : d.provider === "groq" ? { groqModelId: model.id } : { openRouterModelId: model.id }),
                                   webGrounding: model.supportsGrounding ? d.webGrounding : false 
                                 }))
                                 setModelOpen(false)
@@ -416,12 +429,12 @@ export function ProjectSidebar({
 
                 {/* API Status */}
                 <div className={`flex items-center gap-2 rounded-md px-2.5 py-2 font-mono text-[9px] ${
-                  (draft.provider === "google" ? draft.googleApiKey : draft.openRouterApiKey)
+                  (draft.provider === "google" ? draft.googleApiKey : draft.provider === "groq" ? draft.groqApiKey : draft.openRouterApiKey)
                     ? "bg-primary/10 border border-primary/20 text-primary"
                     : "bg-white/5 border border-white/5 text-muted-foreground"
                 }`}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${(draft.provider === "google" ? draft.googleApiKey : draft.openRouterApiKey) ? "bg-primary animate-pulse" : "bg-white/30"}`} />
-                  {(draft.provider === "google" ? draft.googleApiKey : draft.openRouterApiKey) ? "API key configured" : "No API key — AI disabled"}
+                  <span className={`h-1.5 w-1.5 rounded-full ${(draft.provider === "google" ? draft.googleApiKey : draft.provider === "groq" ? draft.groqApiKey : draft.openRouterApiKey) ? "bg-primary animate-pulse" : "bg-white/30"}`} />
+                  {(draft.provider === "google" ? draft.googleApiKey : draft.provider === "groq" ? draft.groqApiKey : draft.openRouterApiKey) ? "API key configured" : "No API key — AI disabled"}
                 </div>
               </motion.div>
             )}

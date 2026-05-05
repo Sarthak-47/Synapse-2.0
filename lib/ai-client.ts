@@ -20,6 +20,16 @@ export function getAIProviderParams(config: AIConfig): AIProviderParams {
       },
     }
   }
+  
+  if (config.provider === "groq") {
+    return {
+      url: "https://api.groq.com/openai/v1/chat/completions",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${config.apiKey}`,
+      },
+    }
+  }
 
   // OpenRouter (Default)
   return {

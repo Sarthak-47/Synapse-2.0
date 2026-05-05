@@ -157,17 +157,25 @@ export async function detectContradictions(blocks: TextBlock[]): Promise<Contrad
 
   const params = getAIProviderParams(config)
 
+  const finalSystemPrompt = config.provider === "groq"
+    ? `${SYSTEM_PROMPT}\n\nYou MUST respond in pure JSON format matching this exact schema:\n${JSON.stringify(SCHEMA.schema, null, 2)}`
+    : SYSTEM_PROMPT
+
+  const response_format = config.provider === "groq"
+    ? { type: "json_object" }
+    : { type: "json_schema", json_schema: SCHEMA }
+
   const response = await fetch(params.url, {
     method: "POST",
     headers: params.headers,
     body: JSON.stringify({
       model: config.modelId,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: finalSystemPrompt },
         { role: "user",   content: userMessage },
       ],
       // Strict JSON schema ensures a parseable response without a fallback regex
-      response_format: { type: "json_schema", json_schema: SCHEMA },
+      response_format,
       temperature: 0.1,   // very low temperature for deterministic fact-checking
       max_tokens: 1500,
     }),

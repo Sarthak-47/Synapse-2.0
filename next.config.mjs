@@ -54,7 +54,7 @@ const nextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "connect-src 'self' https://openrouter.ai https://generativelanguage.googleapis.com",
+              "connect-src 'self' https://openrouter.ai https://generativelanguage.googleapis.com https://api.groq.com",
               "img-src 'self' data: blob:",
               "font-src 'self' data:",
               "frame-ancestors 'none'",

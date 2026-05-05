@@ -216,16 +216,24 @@ You have live web access. For this note type, include 1–2 real source citation
 
   const params = getAIProviderParams(config)
 
+  const finalSystemPrompt = config.provider === "groq"
+    ? `${systemPrompt}\n\nYou MUST respond in pure JSON format matching this exact schema:\n${JSON.stringify(JSON_SCHEMA.schema, null, 2)}`
+    : systemPrompt
+
+  const response_format = config.provider === "groq"
+    ? { type: "json_object" }
+    : { type: "json_schema", json_schema: JSON_SCHEMA }
+
   const response = await fetch(params.url, {
     method: "POST",
     headers: params.headers,
     body: JSON.stringify({
       model,
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: finalSystemPrompt },
         { role: "user",   content: userMessage },
       ],
-      response_format: { type: "json_schema", json_schema: JSON_SCHEMA },
+      response_format,
       temperature: 0.1,
       max_tokens: 1500,
     }),

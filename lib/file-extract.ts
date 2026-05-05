@@ -26,6 +26,7 @@
 
 import { loadAIConfig } from "@/lib/ai-settings"
 import { getAIProviderParams } from "@/lib/ai-client"
+import { compressDocument } from "@/lib/ai-compress"
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -268,9 +269,10 @@ export function isImageFile(file: File): boolean {
  * short enough to be a single note. All other formats run locally.
  *
  * @param file - File from a picker or drag-drop event
+ * @param useAI - Whether to use AI Lossless Compression (defaults to true)
  * @returns array of text chunks ready to become canvas notes
  */
-export async function extractAndChunk(file: File): Promise<string[]> {
+export async function extractAndChunk(file: File, useAI: boolean = true): Promise<string[]> {
   const name = file.name.toLowerCase()
   let raw: string
 
@@ -290,7 +292,15 @@ export async function extractAndChunk(file: File): Promise<string[]> {
     )
   }
 
-  const chunks = chunkText(raw)
+  // If useAI is true and the user didn't upload an image (which already uses Vision API),
+  // we pass the raw text through the lossless compression pipeline.
+  let chunks: string[]
+  if (useAI && !isImageFile(file)) {
+    chunks = await compressDocument(raw)
+  } else {
+    // Fallback to dumb local chunking (or image parsing, which comes pre-condensed)
+    chunks = chunkText(raw)
+  }
 
   if (chunks.length === 0) {
     // If chunker filtered everything (e.g. very short image text), keep raw as one note

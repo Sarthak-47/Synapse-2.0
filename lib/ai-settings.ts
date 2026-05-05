@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 
-export type AIProvider = "openrouter" | "google"
+export type AIProvider = "openrouter" | "google" | "groq"
 
 export interface AIModel {
   id: string
@@ -64,17 +64,53 @@ export const AI_MODELS: AIModel[] = [
     supportsGrounding: false,
     provider: "openrouter",
   },
+  // --- Groq Models ---
+  {
+    id: "llama-3.3-70b-versatile",
+    label: "Llama 3.3 70B",
+    shortLabel: "Llama 3.3",
+    description: "Extremely fast, powerful open model",
+    supportsGrounding: false,
+    provider: "groq",
+  },
+  {
+    id: "llama3-8b-8192",
+    label: "Llama 3 8B",
+    shortLabel: "Llama 3 8B",
+    description: "Lightning fast, smaller context",
+    supportsGrounding: false,
+    provider: "groq",
+  },
+  {
+    id: "mixtral-8x7b-32768",
+    label: "Mixtral 8x7B",
+    shortLabel: "Mixtral",
+    description: "High speed mixture of experts",
+    supportsGrounding: false,
+    provider: "groq",
+  },
+  {
+    id: "gemma2-9b-it",
+    label: "Gemma 2 9B",
+    shortLabel: "Gemma 2",
+    description: "Google's open weight model",
+    supportsGrounding: false,
+    provider: "groq",
+  },
 ]
 
 export const DEFAULT_GOOGLE_MODEL_ID = "gemini-2.5-flash"
 export const DEFAULT_OPENROUTER_MODEL_ID = "anthropic/claude-sonnet-4-5"
+export const DEFAULT_GROQ_MODEL_ID = "llama-3.3-70b-versatile"
 
 export interface AISettings {
   provider: AIProvider
   googleApiKey: string
   openRouterApiKey: string
+  groqApiKey: string
   googleModelId: string
   openRouterModelId: string
+  groqModelId: string
   webGrounding: boolean
 }
 
@@ -84,8 +120,10 @@ const DEFAULT_SETTINGS: AISettings = {
   provider: "openrouter", // Default to OpenRouter for backwards compatibility
   googleApiKey: "",
   openRouterApiKey: "",
+  groqApiKey: "",
   googleModelId: DEFAULT_GOOGLE_MODEL_ID,
   openRouterModelId: DEFAULT_OPENROUTER_MODEL_ID,
+  groqModelId: DEFAULT_GROQ_MODEL_ID,
   webGrounding: false,
 }
 
@@ -131,6 +169,10 @@ export function loadAIConfig(): AIConfig | null {
     if (!s.googleApiKey) return null
     const model = AI_MODELS.find(m => m.id === s.googleModelId && m.provider === "google") || AI_MODELS.find(m => m.id === DEFAULT_GOOGLE_MODEL_ID)!
     return { provider: "google", apiKey: s.googleApiKey, modelId: model.id, supportsGrounding: model.supportsGrounding, webGrounding: s.webGrounding }
+  } else if (s.provider === "groq") {
+    if (!s.groqApiKey) return null
+    const model = AI_MODELS.find(m => m.id === s.groqModelId && m.provider === "groq") || AI_MODELS.find(m => m.id === DEFAULT_GROQ_MODEL_ID)!
+    return { provider: "groq", apiKey: s.groqApiKey, modelId: model.id, supportsGrounding: model.supportsGrounding, webGrounding: s.webGrounding }
   } else {
     if (!s.openRouterApiKey) return null
     const model = AI_MODELS.find(m => m.id === s.openRouterModelId && m.provider === "openrouter") || AI_MODELS.find(m => m.id === DEFAULT_OPENROUTER_MODEL_ID)!
@@ -158,8 +200,17 @@ export function useAISettings() {
     })
   }, [])
 
-  const currentModelId = settings.provider === "google" ? settings.googleModelId : settings.openRouterModelId
-  const defaultModelId = settings.provider === "google" ? DEFAULT_GOOGLE_MODEL_ID : DEFAULT_OPENROUTER_MODEL_ID
+  const currentModelId = settings.provider === "google" 
+    ? settings.googleModelId 
+    : settings.provider === "groq"
+      ? settings.groqModelId
+      : settings.openRouterModelId
+      
+  const defaultModelId = settings.provider === "google" 
+    ? DEFAULT_GOOGLE_MODEL_ID 
+    : settings.provider === "groq"
+      ? DEFAULT_GROQ_MODEL_ID
+      : DEFAULT_OPENROUTER_MODEL_ID
 
   const currentModel = AI_MODELS.find(m => m.id === currentModelId) || AI_MODELS.find(m => m.id === defaultModelId)!
 

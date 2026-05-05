@@ -40,6 +40,7 @@ export function FileImportPanel({ isOpen, onClose, onAddChunks }: FileImportPane
   const [dragOver,     setDragOver]     = React.useState(false)
   const [imagePreview, setImagePreview] = React.useState<string | null>(null)
   const [isImage,      setIsImage]      = React.useState(false)
+  const [useAI,        setUseAI]        = React.useState(true)
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
@@ -85,7 +86,7 @@ export function FileImportPanel({ isOpen, onClose, onAddChunks }: FileImportPane
     setStatus("extracting")
 
     try {
-      const extracted = await extractAndChunk(file)
+      const extracted = await extractAndChunk(file, useAI)
       setChunks(extracted)
       setSelected(new Set(extracted.map((_, i) => i)))
       setStatus("review")
@@ -225,6 +226,31 @@ export function FileImportPanel({ isOpen, onClose, onAddChunks }: FileImportPane
                 className="hidden"
                 onChange={handleFileInput}
               />
+
+              {/* AI Compression Toggle */}
+              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/5 w-full justify-center">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={useAI}
+                  onClick={() => setUseAI(!useAI)}
+                  className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-opacity-75 ${useAI ? 'bg-primary' : 'bg-white/20'}`}
+                >
+                  <span className="sr-only">Use AI Compression</span>
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${useAI ? 'translate-x-3.5' : 'translate-x-0.5'}`}
+                  />
+                </button>
+                <div className="flex flex-col">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/80">
+                    Enable AI Lossless Compression
+                  </span>
+                  <span className="font-mono text-[9px] text-muted-foreground/40 mt-0.5 max-w-[280px]">
+                    Intelligently condenses documents without losing facts. May take a few extra seconds.
+                  </span>
+                </div>
+              </div>
             </div>
           )}
 
@@ -251,7 +277,7 @@ export function FileImportPanel({ isOpen, onClose, onAddChunks }: FileImportPane
 
               <div className="text-center">
                 <p className="font-mono text-xs text-foreground/60 uppercase tracking-widest">
-                  {isImage ? "Reading image via AI vision" : "Extracting text"}
+                  {isImage ? "Reading image via AI vision" : (useAI ? "Condensing document with AI" : "Extracting text")}
                 </p>
                 <p className="font-mono text-[10px] text-muted-foreground/30 mt-1 max-w-[260px] text-center truncate">
                   {fileName}
