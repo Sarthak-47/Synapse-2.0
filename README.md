@@ -2,7 +2,7 @@
 
 A spatial AI thinking tool. Drop notes onto a canvas, and AI classifies, connects, and synthesises them in the background. Three views — tiling canvas, kanban, and graph — for different thinking modes.
 
-Built with Next.js 16, React 19, TypeScript, Tailwind CSS 4, D3, and OpenRouter.
+Built with Next.js 16, React 19, TypeScript, Tailwind CSS 4, D3, and a Tri-Provider AI Architecture (Groq, OpenRouter, Google Gemini).
 
 ---
 
@@ -17,6 +17,7 @@ Synapse is designed around one idea: **AI should augment thinking, not replace i
 - Detect contradictions between notes and flag them visually
 - Answer questions about your canvas via a RAG chat interface
 - Generate a structured research report from your notes
+- Perform lossless compression on imported academic documents to extract highly-dense study flashcards
 
 ---
 
@@ -30,7 +31,9 @@ Synapse is designed around one idea: **AI should augment thinking, not replace i
 | **Kanban** | Column layout organised by AI-assigned category |
 | **Graph** | Force-directed knowledge graph with category cluster regions, contradiction edges, and connection highlighting |
 
-### AI Layer (via OpenRouter)
+### AI Layer (Tri-Provider Architecture)
+
+**AI Lossless Compression (Smart Import)** — Drop large academic PDFs, PPTXs, or DOCXs into the application. Synapse runs the text through an intelligent compression pipeline, stripping away academic fluff and converting entire lectures into perfectly condensed, atomic study flashcards without losing a single fact.
 
 **Note enrichment** — every note is classified and annotated automatically after an 800ms debounce. Supports 14 content types and multi-language input.
 
@@ -66,7 +69,7 @@ Expose any canvas to Claude Desktop or other MCP-compatible AI clients. See [MCP
 ### Prerequisites
 
 - Node.js 18+
-- An OpenRouter API key ([openrouter.ai](https://openrouter.ai))
+- An API key for your preferred provider (Groq, OpenRouter, or Google Gemini)
 
 ### Run locally
 
@@ -79,7 +82,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-On first launch, open **Settings** (bottom-right of the status bar) and enter your OpenRouter API key. Choose a model — GPT-4o is the default; Claude Sonnet gives the best annotation quality.
+On first launch, open **Settings** (bottom-right of the status bar) and enter your API key. You can choose between Groq, OpenRouter, and Google Gemini as your active provider.
 
 ---
 
@@ -164,7 +167,8 @@ Restart Claude Desktop. You will see Synapse tools available in Claude.
 | Styling | Tailwind CSS 4, Radix UI, shadcn/ui |
 | Animation | Framer Motion |
 | Graph | D3 (force simulation, convex hull, Catmull-Rom curves) |
-| AI | OpenRouter (Claude Sonnet 4.5, GPT-4o, Gemini 2.5 Pro, DeepSeek V3, Mistral Small) |
+| AI Providers | Groq, Google Gemini, OpenRouter |
+| Models | Llama 3.3, Gemini 1.5/2.5, GPT-4o, Claude Sonnet 3.5, DeepSeek V3 |
 | MCP | @modelcontextprotocol/sdk |
 | Persistence | localStorage + `.synapse` JSON format |
 
@@ -172,7 +176,7 @@ Restart Claude Desktop. You will see Synapse tools available in Claude.
 
 ## Project Structure
 
-```
+```text
 app/
   page.tsx              Main application (state, AI workflow, views)
   api/fetch-url/        URL metadata extraction with SSRF protection
@@ -185,13 +189,16 @@ components/
   chat-panel.tsx        RAG chat ("Ask your canvas")
   report-panel.tsx      AI research report generator
   vim-input.tsx         Command palette
+  file-import-panel.tsx Study material AI import pipeline
 lib/
-  ai-enrich.ts          Note classification and annotation via OpenRouter
+  ai-enrich.ts          Note classification and annotation
   ai-ghost.ts           Cross-category synthesis (ghost notes)
   ai-chat.ts            Streaming RAG chat
   ai-report.ts          Streaming research report generation
   ai-contradiction.ts   Contradiction detection between notes
-  ai-settings.ts        API key and model management
+  ai-settings.ts        API key and provider routing management
+  ai-compress.ts        Lossless document compression pipeline
+  file-extract.ts       Raw text extraction for PDF, PPTX, DOCX, and Images
   content-types.ts      14 content type definitions
   nodepad-format.ts     .synapse file serialisation
   export.ts             Markdown export
@@ -204,15 +211,13 @@ mcp-server/
 
 ## Models
 
-All AI calls go through [OpenRouter](https://openrouter.ai). Switch models in Settings at any time.
+All AI calls go through the Tri-Provider architecture. Switch providers and models in Settings at any time.
 
-| Model | Best for |
-|-------|---------|
-| Claude Sonnet 4.5 | Annotation quality, nuanced reasoning |
-| GPT-4o | Structured output, broad knowledge |
-| Gemini 2.5 Pro | Long context, web grounding |
-| DeepSeek V3 | Cost-efficient bulk enrichment |
-| Mistral Small 3.2 | Fast turnaround |
+| Provider | Supported Models | Best for |
+|----------|-----------------|----------|
+| **Groq** | Llama 3.3 70B, Mixtral 8x7B | Ultra-fast bulk enrichment and lossless document compression |
+| **Google** | Gemini 1.5 Flash, Gemini 1.5 Pro | Extremely long context processing and complex reasoning |
+| **OpenRouter** | Claude Sonnet, GPT-4o, DeepSeek V3 | High-quality annotations, varied model selection, and vision tasks |
 
 ---
 
