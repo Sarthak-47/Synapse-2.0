@@ -198,6 +198,12 @@ export default function Page() {
       initialActiveId = INITIAL_PROJECTS[0].id
     }
 
+    // Blocks stuck with isEnriching: true were interrupted mid-flight — reset them
+    initialProjects = initialProjects.map(p => ({
+      ...p,
+      blocks: p.blocks.map(b => b.isEnriching ? { ...b, isEnriching: false } : b)
+    }))
+
     setProjects(initialProjects)
     setActiveProjectId(initialActiveId)
     setIsLoaded(true)
@@ -224,6 +230,29 @@ export default function Page() {
       localStorage.setItem("synapse-backup", JSON.stringify(projects))
     } catch { /* quota exceeded — skip silently */ }
   }, [projects, isLoaded])
+
+  // 4. Re-enrich any blocks that lost their annotation (page closed mid-flight or
+  //    enrichment failed silently). Runs once after load, staggered to avoid 429s.
+  const didEnrichOnLoad = useRef(false)
+  useEffect(() => {
+    if (!isLoaded || !hasApiKey || didEnrichOnLoad.current) return
+    didEnrichOnLoad.current = true
+    const pending: { projectId: string; block: TextBlock }[] = []
+    for (const project of projectsRef.current) {
+      for (const block of project.blocks) {
+        if (!block.annotation && !block.isError && !block.isEnriching && block.text?.trim()) {
+          pending.push({ projectId: project.id, block })
+        }
+      }
+    }
+    pending.forEach(({ projectId, block }, i) => {
+      setTimeout(() => {
+        enrichBlock(projectId, block.id, block.text, block.category).catch(console.error)
+      }, i * 1500)
+    })
+  // enrichBlock is stable (useCallback); projectsRef is a ref — intentional omission
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, hasApiKey])
 
   // Hidden file input for .synapse import — triggered from sidebar or ⌘K
   const importInputRef = useRef<HTMLInputElement>(null)
@@ -397,13 +426,24 @@ export default function Page() {
         .slice(-15)
 
       const performEnrich = async () => {
+        const callEnrich = () => enrichBlockClient(
+          text,
+          context.map(({ id, ...rest }) => ({ id, ...rest })),
+          forcedType,
+          category,
+        )
         try {
-          const data = await enrichBlockClient(
-            text,
-            context.map(({ id, ...rest }) => ({ id, ...rest })),
-            forcedType,
-            category,
-          )
+          const data = await (async () => {
+            try {
+              return await callEnrich()
+            } catch (e: any) {
+              if (e?.message?.includes("429")) {
+                await new Promise<void>(r => setTimeout(r, 6000))
+                return await callEnrich()
+              }
+              throw e
+            }
+          })()
 
           // Map indices back to stable block IDs — the context array carries
           // the original block IDs so we get exact, rename-proof references.
