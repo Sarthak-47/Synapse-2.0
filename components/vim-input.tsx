@@ -351,7 +351,7 @@ export function VimInput({ onSubmit, onCommand, isCommandKOpen, setIsCommandKOpe
 
           <div className="flex items-center gap-3 flex-1">
             <div className="font-mono text-[10px] font-bold text-white/60 uppercase tracking-[0.2em] select-none">
-              Entry
+              Think
             </div>
             <Command.Input
               ref={mainInputRef}

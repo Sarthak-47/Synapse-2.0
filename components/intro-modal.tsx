@@ -50,10 +50,12 @@ export function IntroModal({ open, onClose }: IntroModalProps) {
             <div className="flex items-center justify-between px-6 pt-6 pb-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="flex items-center gap-0.5">
-                    <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary" />
-                    <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary/60" />
-                    <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary/30" />
+                  <div className="flex items-center gap-1">
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-primary" />
+                    <span className="inline-block h-0.5 w-3.5 rounded-full bg-primary/35" />
+                    <span className="inline-block h-2 w-2 rounded-full bg-primary/65" />
+                    <span className="inline-block h-0.5 w-2.5 rounded-full bg-primary/25" />
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary/40" />
                   </div>
                   <span className="font-mono text-sm font-black text-foreground tracking-tight">Synapse</span>
                 </div>

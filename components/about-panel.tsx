@@ -72,10 +72,12 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
         {/* Header */}
         <div className="flex-shrink-0 px-8 pt-8 pb-6 border-b border-border">
           <div className="flex items-center gap-3 mb-3">
-            <div className="flex items-center gap-0.5">
-              <span className="inline-block h-3 w-3 rounded-sm bg-primary" />
-              <span className="inline-block h-3 w-3 rounded-sm bg-primary/60" />
-              <span className="inline-block h-3 w-3 rounded-sm bg-primary/30" />
+            <div className="flex items-center gap-1">
+              <span className="inline-block h-3 w-3 rounded-full bg-primary" />
+              <span className="inline-block h-0.5 w-4 rounded-full bg-primary/35" />
+              <span className="inline-block h-2 w-2 rounded-full bg-primary/65" />
+              <span className="inline-block h-0.5 w-3 rounded-full bg-primary/25" />
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary/40" />
             </div>
             <h1 className="font-mono text-xl font-black text-foreground tracking-tight">Synapse</h1>
           </div>
@@ -83,16 +85,16 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
             A spatial research tool that reads what you write and enriches it with AI — no prompting, no chat. Just capture your thinking and let the structure emerge.
           </p>
           <p className="mt-2 text-xs font-mono text-primary/60 uppercase tracking-widest">
-            No chat · No prompts · AI that augments your thinking
+            Capture · Connect · Synthesise · Study
           </p>
           <p className="mt-3 text-xs text-muted-foreground/50 flex items-center gap-3 flex-wrap">
             <a
-              href="[https://synapse-sarthak-47.vercel.app/]"
+              href="https://github.com/Sarthak-47/Synapse-2.0"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/50 hover:text-foreground border border-white/10 hover:border-white/25 px-2 py-0.5 rounded-sm transition-colors"
             >
-              Source code ↗
+              GitHub ↗
             </a>
           </p>
         </div>
@@ -114,7 +116,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
           <Section title="Quick start">
             <div className="space-y-4">
               <Step n={1} title="Add your API key">
-                Open the sidebar (menu button top-left) → Settings → paste your OpenRouter API key. Free to sign up at openrouter.ai. Without a key the app works but AI enrichment is disabled.
+                Open the sidebar (menu button top-left) → Settings → choose a provider (Groq is free, OpenRouter and Google also supported) and paste your key. Without a key the app runs but AI enrichment is disabled.
               </Step>
               <Step n={2} title="Capture anything">
                 Type a thought, paste a quote, drop a URL, or write a question into the input bar at the bottom and press Enter. Synapse classifies it automatically.
@@ -266,11 +268,11 @@ export function AboutPanel({ open, onClose }: AboutPanelProps) {
 
           {/* Footer */}
           <div className="pt-2 pb-4 border-t border-border">
-            <div className="flex items-center gap-1.5">
-              <span className="inline-block h-1.5 w-1.5 rounded-sm bg-primary" />
-              <span className="inline-block h-1.5 w-1.5 rounded-sm bg-primary/60" />
-              <span className="inline-block h-1.5 w-1.5 rounded-sm bg-primary/30" />
-              <span className="font-mono text-[10px] font-bold text-muted-foreground/40 ml-1">Synapse</span>
+            <div className="flex items-center gap-1">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+              <span className="inline-block h-px w-3 rounded-full bg-primary/35" />
+              <span className="inline-block h-1 w-1 rounded-full bg-primary/60" />
+              <span className="font-mono text-[10px] font-bold text-muted-foreground/40 ml-1.5">Synapse</span>
             </div>
           </div>
 

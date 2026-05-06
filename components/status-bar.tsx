@@ -88,9 +88,9 @@ export function StatusBar({
         
         <div className="flex items-center gap-2.5 ml-1">
           <div className="flex items-center gap-0.5">
-            <span className="inline-block h-2 w-2 rounded-sm bg-primary" />
-            <span className="inline-block h-2 w-2 rounded-sm bg-primary/60" />
-            <span className="inline-block h-2 w-2 rounded-sm bg-primary/30" />
+            <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+            <span className="inline-block h-px w-3 rounded-full bg-primary/35" />
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary/65" />
           </div>
           <h1 className="font-mono text-xs font-bold text-foreground tracking-tight select-none">
             Synapse

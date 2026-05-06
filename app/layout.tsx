@@ -1,10 +1,21 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono, Vazirmatn } from 'next/font/google'
+import { Space_Grotesk, Space_Mono, Vazirmatn } from 'next/font/google'
 import { MobileWall } from '@/components/mobile-wall'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+})
+
+const spaceMono = Space_Mono({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-space-mono",
+  display: "swap",
+})
+
 const vazirmatn = Vazirmatn({
   subsets: ["arabic"],
   variable: "--font-vazirmatn",
@@ -21,7 +32,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Synapse',
     description: 'A spatial research tool where AI augments your thinking — not replaces it.',
-    url: '[YOUR_DEPLOYED_URL]',
+    url: 'https://synapse-sarthak-47.vercel.app',
     siteName: 'Synapse',
     locale: 'en_US',
     type: 'website',
@@ -42,7 +53,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
       </head>
-      <body className={`font-sans antialiased ${vazirmatn.variable}`} suppressHydrationWarning>
+      <body className={`font-sans antialiased ${spaceGrotesk.variable} ${spaceMono.variable} ${vazirmatn.variable}`} suppressHydrationWarning>
         <MobileWall />
         {children}
       </body>
