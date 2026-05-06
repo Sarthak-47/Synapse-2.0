@@ -11,6 +11,7 @@ import { GhostPanel, type GhostNote } from "@/components/ghost-panel"
 import { ChatPanel } from "@/components/chat-panel"
 import { ReportPanel } from "@/components/report-panel"
 import { FileImportPanel } from "@/components/file-import-panel"
+import { FlashcardPanel } from "@/components/flashcard-panel"
 import { VimInput } from "@/components/vim-input"
 import { IntroModal } from "@/components/intro-modal"
 import type { TextBlock } from "@/components/tile-card"
@@ -53,7 +54,8 @@ export default function Page() {
   const [isGhostPanelOpen, setIsGhostPanelOpen] = useState(false)
   const [isChatPanelOpen, setIsChatPanelOpen]       = useState(false)
   const [isReportPanelOpen, setIsReportPanelOpen]   = useState(false)
-  const [isImportPanelOpen, setIsImportPanelOpen]   = useState(false)
+  const [isImportPanelOpen,   setIsImportPanelOpen]   = useState(false)
+  const [isFlashcardPanelOpen, setIsFlashcardPanelOpen] = useState(false)
   const [isDetectingTensions, setIsDetectingTensions] = useState(false)
   const [viewMode, setViewMode] = useState<"tiling" | "kanban" | "graph">("tiling")
   const [isCommandKOpen, setIsCommandKOpen] = useState(false)
@@ -856,6 +858,8 @@ export default function Page() {
       setIsReportPanelOpen(prev => !prev)
     } else if (cmd === "import-file") {
       setIsImportPanelOpen(true)
+    } else if (cmd === "flashcards") {
+      setIsFlashcardPanelOpen(true)
     } else if (cmd === "detect-tensions") {
       // Run contradiction detection across the active project's blocks
       runContradictionDetection()
@@ -1094,7 +1098,14 @@ export default function Page() {
         onAddChunks={handleAddChunks}
       />
 
-      {/* First-visit intro video modal */}
+      {/* Flashcard study mode */}
+      <FlashcardPanel
+        isOpen={isFlashcardPanelOpen}
+        onClose={() => setIsFlashcardPanelOpen(false)}
+        blocks={activeProject?.blocks ?? []}
+      />
+
+      {/* First-visit intro modal */}
       <IntroModal open={isIntroOpen} onClose={handleIntroClose} />
     </div>
   )

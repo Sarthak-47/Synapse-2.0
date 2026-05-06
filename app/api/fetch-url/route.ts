@@ -4,10 +4,31 @@ type UrlMeta = {
   title: string
   description: string
   excerpt: string
+  fullText: string
   statusCode: number
 }
 
-function extractMeta(html: string): Omit<UrlMeta, "statusCode"> {
+function extractArticleText(html: string): string {
+  const stripped = html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<nav[\s\S]*?<\/nav>/gi, "")
+    .replace(/<header[\s\S]*?<\/header>/gi, "")
+    .replace(/<footer[\s\S]*?<\/footer>/gi, "")
+    .replace(/<aside[\s\S]*?<\/aside>/gi, "")
+
+  const parts: string[] = []
+  const tagRe = /<(h[1-4]|p|li|blockquote|td)\b[^>]*>([\s\S]*?)<\/\1>/gi
+  let m: RegExpExecArray | null
+  while ((m = tagRe.exec(stripped)) !== null) {
+    const inner = m[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+    if (inner.length > 25) parts.push(inner)
+  }
+
+  return parts.join("\n\n").slice(0, 12000)
+}
+
+function extractMeta(html: string): Omit<UrlMeta, "statusCode" | "fullText"> {
   const tag = (pattern: RegExp) => {
     const m = html.match(pattern)
     return m ? m[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").trim() : ""
@@ -54,16 +75,21 @@ async function fetchUrlMeta(url: string): Promise<UrlMeta | null> {
     }
 
     const statusCode = res.status
-    if (!res.ok) return { title: "", description: "", excerpt: "", statusCode }
+    if (!res.ok) return { title: "", description: "", excerpt: "", fullText: "", statusCode }
 
     const ct = res.headers.get("content-type") || ""
     if (!ct.includes("text/html")) {
       const kind = ct.split(";")[0].trim()
-      return { title: "", description: `Non-HTML resource: ${kind}`, excerpt: "", statusCode }
+      return { title: "", description: `Non-HTML resource: ${kind}`, excerpt: "", fullText: "", statusCode }
     }
 
     const html = await res.text()
-    return { ...extractMeta(html), statusCode }
+    const meta = extractMeta(html)
+    return {
+      ...meta,
+      fullText: extractArticleText(html),
+      statusCode,
+    }
   } catch {
     return null
   }

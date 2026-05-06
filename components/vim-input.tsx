@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   Trello, Grid, Trash2, Clipboard, Download,
   FolderOpen, FolderPlus, BookOpen, Sparkles, MessageSquare, FileText, Zap,
-  FolderDown, FolderInput, GitFork, FileUp,
+  FolderDown, FolderInput, GitFork, FileUp, BookMarked,
 } from "lucide-react"
 import { Command } from "cmdk"
 import { useModKey } from "@/lib/utils"
@@ -56,6 +56,7 @@ export function VimInput({ onSubmit, onCommand, isCommandKOpen, setIsCommandKOpe
     { id: "report",          icon: FileText,      label: "Research Report",  sub: "AI-generated .md"  },
     { id: "detect-tensions", icon: Zap,           label: "Detect Tensions",  sub: "find contradictions" },
     { id: "import-file",     icon: FileUp,         label: "Import File",      sub: "pdf · pptx · img"  },
+    { id: "flashcards",      icon: BookMarked,     label: "Flashcards",       sub: "study mode"         },
   ], [])
 
   // ── Filtered items ──────────────────────────────────────────────────────

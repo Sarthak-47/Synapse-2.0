@@ -220,7 +220,7 @@ export function StatusBar({
                   <div className="absolute -top-1.5 right-2.5 w-3 h-3 rotate-45 bg-primary rounded-[2px]" />
                   <div className="relative px-3 py-2.5">
                     <p className="text-[11px] font-medium leading-snug">
-                      Find help &amp; the intro video here anytime
+                      Find help &amp; project info here anytime
                     </p>
                   </div>
                 </motion.div>

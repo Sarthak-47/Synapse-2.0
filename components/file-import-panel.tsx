@@ -16,9 +16,9 @@
 import * as React from "react"
 import {
   FileText, Upload, X, CheckSquare, Square,
-  AlertCircle, Loader2, FileUp, Image,
+  AlertCircle, Loader2, FileUp, Image, Link, Youtube,
 } from "lucide-react"
-import { extractAndChunk, ACCEPTED_TYPES, isImageFile } from "@/lib/file-extract"
+import { extractAndChunk, ACCEPTED_TYPES, isImageFile, chunkText } from "@/lib/file-extract"
 
 interface FileImportPanelProps {
   isOpen: boolean
@@ -41,6 +41,8 @@ export function FileImportPanel({ isOpen, onClose, onAddChunks }: FileImportPane
   const [imagePreview, setImagePreview] = React.useState<string | null>(null)
   const [isImage,      setIsImage]      = React.useState(false)
   const [useAI,        setUseAI]        = React.useState(true)
+  const [activeTab,    setActiveTab]    = React.useState<"file" | "url">("file")
+  const [urlInput,     setUrlInput]     = React.useState("")
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
@@ -55,6 +57,8 @@ export function FileImportPanel({ isOpen, onClose, onAddChunks }: FileImportPane
       setDragOver(false)
       setIsImage(false)
       setImagePreview(null)
+      setActiveTab("file")
+      setUrlInput("")
     } else {
       if (imagePreview) URL.revokeObjectURL(imagePreview)
     }
@@ -92,6 +96,56 @@ export function FileImportPanel({ isOpen, onClose, onAddChunks }: FileImportPane
       setStatus("review")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Extraction failed.")
+      setStatus("error")
+    }
+  }
+
+  // ── URL processing (YouTube transcript + web article clipping) ───────────────
+
+  const isYouTubeUrl = (url: string) =>
+    /(?:youtube\.com\/watch|youtu\.be\/|youtube\.com\/shorts\/)/.test(url)
+
+  const processUrl = async (url: string) => {
+    const trimmed = url.trim()
+    if (!trimmed) return
+    setError(null)
+    setIsImage(false)
+    setImagePreview(null)
+
+    const isYT = isYouTubeUrl(trimmed)
+    setFileName(isYT ? "YouTube video" : new URL(trimmed).hostname)
+    setStatus("extracting")
+
+    try {
+      let text = ""
+      if (isYT) {
+        const res = await fetch("/api/fetch-transcript", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: trimmed }),
+        })
+        const data = await res.json()
+        if (!res.ok || data.error) throw new Error(data.error || "Failed to fetch transcript")
+        text = data.text
+      } else {
+        const res = await fetch("/api/fetch-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: trimmed }),
+        })
+        const data = await res.json()
+        if (!res.ok || data.error) throw new Error(data.error || "Failed to fetch page")
+        text = data.fullText || data.excerpt || ""
+        if (!text.trim()) throw new Error("No readable content found on this page.")
+      }
+
+      const extracted = chunkText(text)
+      if (extracted.length === 0) throw new Error("Could not extract any text chunks from this source.")
+      setChunks(extracted)
+      setSelected(new Set(extracted.map((_, i) => i)))
+      setStatus("review")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch URL.")
       setStatus("error")
     }
   }
@@ -173,7 +227,54 @@ export function FileImportPanel({ isOpen, onClose, onAddChunks }: FileImportPane
           {/* ── Idle: drop zone ─────────────────────────────────────────────── */}
           {status === "idle" && (
             <div className="p-6 flex flex-col items-center gap-4">
-              <div
+
+              {/* Tab switcher */}
+              <div className="flex items-center gap-1 w-full bg-white/[0.03] border border-white/8 rounded-sm p-1">
+                {([["file", Upload, "File"], ["url", Link, "URL / YouTube"]] as const).map(([tab, Icon, label]) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-sm font-mono text-[9px] uppercase tracking-widest transition-all ${
+                      activeTab === tab
+                        ? "bg-white/8 text-foreground/70 border border-white/10"
+                        : "text-foreground/30 hover:text-foreground/50"
+                    }`}
+                  >
+                    <Icon className="h-3 w-3" />{label}
+                  </button>
+                ))}
+              </div>
+
+              {/* URL input tab */}
+              {activeTab === "url" && (
+                <div className="w-full flex flex-col gap-3">
+                  <div className="flex items-center gap-2 w-full bg-white/[0.02] border border-white/8 rounded-sm px-3 py-2.5 focus-within:border-primary/40 transition-colors">
+                    <Youtube className="h-3.5 w-3.5 text-foreground/25 shrink-0" />
+                    <input
+                      type="url"
+                      value={urlInput}
+                      onChange={e => setUrlInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") processUrl(urlInput) }}
+                      placeholder="Paste a YouTube or article URL…"
+                      className="flex-1 bg-transparent font-mono text-xs text-foreground/70 placeholder:text-foreground/25 outline-none"
+                      autoFocus
+                    />
+                  </div>
+                  <button
+                    onClick={() => processUrl(urlInput)}
+                    disabled={!urlInput.trim()}
+                    className="w-full py-2 rounded-sm bg-primary/15 border border-primary/25 text-primary/70 hover:bg-primary/25 transition-colors font-mono text-[10px] uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    Fetch content
+                  </button>
+                  <p className="font-mono text-[8px] text-foreground/20 uppercase tracking-widest text-center">
+                    YouTube · Articles · Blog posts · Research pages
+                  </p>
+                </div>
+              )}
+
+              {/* File drop zone */}
+              {activeTab === "file" && <div
                 onDrop={handleDrop}
                 onDragOver={e => { e.preventDefault(); setDragOver(true) }}
                 onDragLeave={() => setDragOver(false)}
@@ -207,17 +308,19 @@ export function FileImportPanel({ isOpen, onClose, onAddChunks }: FileImportPane
                     </span>
                   ))}
                 </div>
-              </div>
+              </div>}
 
-              {/* Vision API note for images */}
-              <div className="flex flex-col gap-1 w-full">
-                <p className="font-mono text-[9px] text-muted-foreground/25 uppercase tracking-widest text-center leading-relaxed">
-                  PDF · PPTX · DOCX · TXT extracted locally in your browser
-                </p>
-                <p className="font-mono text-[9px] text-muted-foreground/20 uppercase tracking-widest text-center leading-relaxed">
-                  Images read via AI vision · uses your OpenRouter key
-                </p>
-              </div>
+              {/* Vision API note — only shown for file tab */}
+              {activeTab === "file" && (
+                <div className="flex flex-col gap-1 w-full">
+                  <p className="font-mono text-[9px] text-muted-foreground/25 uppercase tracking-widest text-center leading-relaxed">
+                    PDF · PPTX · DOCX · TXT extracted locally in your browser
+                  </p>
+                  <p className="font-mono text-[9px] text-muted-foreground/20 uppercase tracking-widest text-center leading-relaxed">
+                    Images read via AI vision · uses your OpenRouter key
+                  </p>
+                </div>
+              )}
 
               <input
                 ref={fileInputRef}
@@ -296,10 +399,10 @@ export function FileImportPanel({ isOpen, onClose, onAddChunks }: FileImportPane
                 </p>
               </div>
               <button
-                onClick={() => { setStatus("idle"); setImagePreview(null) }}
+                onClick={() => { setStatus("idle"); setImagePreview(null); setUrlInput("") }}
                 className="font-mono text-[10px] uppercase tracking-widest text-foreground/40 hover:text-foreground/70 transition-colors border border-white/10 px-3 py-1.5 rounded-sm hover:bg-white/5"
               >
-                Try another file
+                Try again
               </button>
             </div>
           )}
