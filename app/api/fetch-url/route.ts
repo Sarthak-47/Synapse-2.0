@@ -65,7 +65,7 @@ async function fetchUrlMeta(url: string): Promise<UrlMeta | null> {
       res = await fetch(url, {
         signal: controller.signal,
         headers: {
-          "User-Agent": "Synapse/1.0 (+[YOUR_DEPLOYED_URL])",
+          "User-Agent": "Synapse/1.0 (+https://synapse-sarthak-47.vercel.app)",
           "Accept": "text/html,application/xhtml+xml",
         },
         redirect: "follow",

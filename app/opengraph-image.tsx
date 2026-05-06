@@ -21,14 +21,16 @@ export default function OGImage() {
           fontFamily: "sans-serif",
         }}
       >
-        {/* Logo mark */}
+        {/* Logo mark — neural node */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "48px" }}>
-          <div style={{ display: "flex", gap: "6px" }}>
-            <div style={{ width: 28, height: 28, borderRadius: 5, background: "#3ecf6e" }} />
-            <div style={{ width: 28, height: 28, borderRadius: 5, background: "#3ecf6e", opacity: 0.6 }} />
-            <div style={{ width: 28, height: 28, borderRadius: 5, background: "#3ecf6e", opacity: 0.3 }} />
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#8b5cf6" }} />
+            <div style={{ width: 28, height: 2, borderRadius: 2, background: "rgba(139,92,246,0.35)" }} />
+            <div style={{ width: 16, height: 16, borderRadius: "50%", background: "rgba(139,92,246,0.65)" }} />
+            <div style={{ width: 20, height: 2, borderRadius: 2, background: "rgba(139,92,246,0.25)" }} />
+            <div style={{ width: 12, height: 12, borderRadius: "50%", background: "rgba(139,92,246,0.40)" }} />
           </div>
-          <span style={{ fontSize: 28, fontWeight: 600, color: "#f0f0f0", letterSpacing: "-0.5px" }}>
+          <span style={{ fontSize: 28, fontWeight: 700, color: "#f0f0f0", letterSpacing: "-0.5px" }}>
             Synapse
           </span>
         </div>
@@ -46,12 +48,12 @@ export default function OGImage() {
         >
           Think spatially.
           <br />
-          <span style={{ color: "#3ecf6e" }}>Let AI fill the gaps.</span>
+          <span style={{ color: "#8b5cf6" }}>Let AI fill the gaps.</span>
         </div>
 
         {/* Subline */}
         <div style={{ fontSize: 24, color: "#666", fontWeight: 400, letterSpacing: "-0.3px" }}>
-          [YOUR_DEPLOYED_URL]
+          synapse-sarthak-47.vercel.app
         </div>
       </div>
     ),
