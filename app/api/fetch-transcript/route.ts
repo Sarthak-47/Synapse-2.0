@@ -47,7 +47,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ text, videoId })
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Failed to fetch transcript"
+    const raw = err instanceof Error ? err.message : ""
+    let msg = "Failed to fetch transcript. Please try again."
+    if (/disabled/i.test(raw))         msg = "This video has transcripts disabled. Try a video with captions turned on."
+    else if (/not find/i.test(raw))    msg = "No transcript found for this video."
+    else if (/could not get/i.test(raw)) msg = "Could not retrieve transcript. The video may be private or unavailable."
+    else if (/invalid/i.test(raw))     msg = "Invalid YouTube URL."
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
