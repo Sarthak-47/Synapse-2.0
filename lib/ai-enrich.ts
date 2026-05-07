@@ -28,7 +28,14 @@ function detectScript(text: string): string {
   const words = text.toLowerCase().match(/\b[a-z]{2,}\b/g) ?? []
   if (words.length === 0) return "English"
   const hits = words.filter(w => ENGLISH_STOPWORDS.has(w)).length
-  if (hits / words.length >= 0.10) return "English"
+  if (hits / words.length >= 0.05) return "English"
+
+  // Technical / domain-specific English often has zero stopwords.
+  // If the text is overwhelmingly Latin/ASCII (>80% of non-whitespace chars),
+  // no non-Latin script was detected above, so default to English.
+  const nonWs = text.replace(/\s/g, "").length
+  const latin = (text.match(/[a-zA-Z0-9.,!?;:'"()\-_]/g) ?? []).length
+  if (nonWs > 0 && latin / nonWs > 0.8) return "English"
 
   return "the language of the text inside <note_to_enrich> tags only — ignore all other tags"
 }
