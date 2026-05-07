@@ -231,6 +231,11 @@ export const TileCard = memo(function TileCard({
     if (effectiveCollapsed) return
     const target = e.target as HTMLElement
     if (target.closest('a')) return
+    // If enrichment failed, double-click retries it instead of opening the editor
+    if (block.isError && !block.isEnriching) {
+      onReEnrich(block.id)
+      return
+    }
     // Capture current height before any state changes to prevent shrink during editing
     setEditingMinHeight(cardRef.current?.offsetHeight)
     if (target.closest('.annotation-area')) {
@@ -240,7 +245,7 @@ export const TileCard = memo(function TileCard({
     }
     setEditText(block.text)
     setIsEditing(true)
-  }, [block.text, block.annotation, effectiveCollapsed])
+  }, [block.text, block.annotation, block.isError, block.isEnriching, effectiveCollapsed, onReEnrich])
 
   const isTextRTL = useMemo(() => isRTL(block.text), [block.text])
   const isAnnotationRTL = useMemo(() => isRTL(block.annotation || ""), [block.annotation])

@@ -437,8 +437,16 @@ export default function Page() {
             try {
               return await callEnrich()
             } catch (e: any) {
-              if (e?.message?.includes("429")) {
-                await new Promise<void>(r => setTimeout(r, 6000))
+              const msg = e?.message ?? ""
+              const is429 = msg.includes("429")
+              const is503 = msg.includes("503")
+              if (is429 || is503) {
+                // Respect the API's suggested retry delay when present (Gemini embeds it)
+                const suggested = msg.match(/"retryDelay"\s*:\s*"(\d+)s"/)
+                const waitMs = is429
+                  ? (suggested ? (parseInt(suggested[1]) + 3) * 1000 : 35000)
+                  : 6000  // 503 = temporary overload, shorter wait
+                await new Promise<void>(r => setTimeout(r, waitMs))
                 return await callEnrich()
               }
               throw e
